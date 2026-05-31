@@ -14,7 +14,7 @@ const t = {
     // Navbar
     connect:        "Connect AGW",
     disconnect:     "Disconnect",
-    tab_nations:    "Nations Cup",
+    tab_nations:    "World Cup 26",
     tab_groups:     "Groups",
     tab_scorer:     "Top Scorer",
     tab_leaderboard:"Leaderboard",
@@ -104,7 +104,7 @@ const t = {
   tr: {
     connect:        "AGW Bağlan",
     disconnect:     "Bağlantıyı Kes",
-    tab_nations:    "Milletler Kupası",
+    tab_nations:    "World Cup 26",
     tab_groups:     "Gruplar",
     tab_scorer:     "Gol Kralı",
     tab_leaderboard:"Liderlik Tablosu",
@@ -187,7 +187,7 @@ const t = {
   es: {
     connect:        "Conectar AGW",
     disconnect:     "Desconectar",
-    tab_nations:    "Copa Naciones",
+    tab_nations:    "World Cup 26",
     tab_groups:     "Grupos",
     tab_scorer:     "Máx. Goleador",
     tab_leaderboard:"Clasificación",
@@ -270,7 +270,7 @@ const t = {
   pt: {
     connect:        "Conectar AGW",
     disconnect:     "Desconectar",
-    tab_nations:    "Copa das Nações",
+    tab_nations:    "World Cup 26",
     tab_groups:     "Grupos",
     tab_scorer:     "Artilheiro",
     tab_leaderboard:"Classificação",
@@ -353,7 +353,7 @@ const t = {
   ar: {
     connect:        "ربط المحفظة",
     disconnect:     "قطع الاتصال",
-    tab_nations:    "كأس الأمم",
+    tab_nations:    "World Cup 26",
     tab_groups:     "المجموعات",
     tab_scorer:     "هداف البطولة",
     tab_leaderboard:"لوحة الصدارة",
@@ -436,7 +436,7 @@ const t = {
   ko: {
     connect:        "AGW 연결",
     disconnect:     "연결 해제",
-    tab_nations:    "네이션스컵",
+    tab_nations:    "World Cup 26",
     tab_groups:     "조 편성",
     tab_scorer:     "득점왕",
     tab_leaderboard:"리더보드",

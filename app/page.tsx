@@ -44,6 +44,7 @@ export default function Home() {
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     localStorage.setItem(STORAGE_KEY, tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
