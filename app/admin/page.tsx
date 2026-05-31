@@ -129,9 +129,7 @@ export default function AdminPage() {
         display: "flex", flexDirection: "column", gap: 12,
       }}>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 4 }}>Select Wallet</p>
-        {connectors
-          .filter(c => c.id !== "abstract" && c.id !== "abstractGlobalWallet")
-          .map(c => (
+        {connectors.map(c => (
             <button key={c.id}
               onClick={() => { disconnect(); connect({ connector: c }); setShowWalletPicker(false); }}
               style={{
@@ -148,6 +146,7 @@ export default function AdminPage() {
                 {c.name.toLowerCase().includes("metamask") ? "🦊"
                   : c.name.toLowerCase().includes("rabby") ? "🐰"
                   : c.name.toLowerCase().includes("coinbase") ? "🔵"
+                  : c.name.toLowerCase().includes("abstract") ? "🟣"
                   : "🔐"}
               </span>
               {c.name}
