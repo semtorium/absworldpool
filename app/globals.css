@@ -126,6 +126,12 @@
     100% { transform: translateX(-50%); }
   }
 
+  /* Unused ticket alert border pulse */
+  @keyframes ticketAlertPulse {
+    0%, 100% { border-color: rgba(251,191,36,0.3); box-shadow: none; }
+    50%       { border-color: rgba(251,191,36,0.65); box-shadow: 0 0 16px rgba(251,191,36,0.18); }
+  }
+
   /* Prize hero ring pulse */
   @keyframes prizeRingPulse {
     0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }

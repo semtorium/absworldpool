@@ -13,20 +13,21 @@ interface PrizeCounterProps {
 export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const { t } = useLang();
   const [ethUsd, setEthUsd] = useState<number | null>(null);
-  const isScorer = activeTab === "scorer";
+  const isScorer   = activeTab === "scorer";
+  const isHidden   = activeTab === "leaderboard" || activeTab === "activity";
 
   const { data: totalPool } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
     functionName: "totalLockedPrizePool",
-    query: { refetchInterval: 30_000 },
+    query: { refetchInterval: 5_000 },
   });
 
   const { data: tsPool } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
     functionName: "topScorerPoolBalance",
-    query: { refetchInterval: 30_000 },
+    query: { refetchInterval: 5_000 },
   });
 
   useEffect(() => {
@@ -44,6 +45,8 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
     const id = setInterval(fetchPrice, 60_000);
     return () => clearInterval(id);
   }, []);
+
+  if (isHidden) return null;
 
   const pool     = isScorer ? (tsPool ?? 0n) : (totalPool ?? 0n);
   const ethValue = Number(pool) / 1e18;

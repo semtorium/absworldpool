@@ -42,7 +42,7 @@ export function NationsCupPage() {
   const { address } = useAccount();
   const { t } = useLang();
 
-  const { data: allPools, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools" });
+  const { data: allPools, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools", query: { refetchInterval: 5_000 } });
   const { data: tournamentFinalized } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
   const { data: winningCountryId }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
   const { data: userBalance }         = useReadContract({

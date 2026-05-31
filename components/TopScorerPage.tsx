@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, TICKET_PRICE, TOP_SCORER_PLAYERS, formatEth } from "@/lib/config";
@@ -14,40 +15,49 @@ export function TopScorerPage() {
   const { address, isConnected } = useAccount();
   const { login } = useLoginWithAbstract();
   const { t } = useLang();
+  const queryClient = useQueryClient();
+
   const [ticketQty, setTicketQty]     = useState(1);
   const [voteAmounts, setVoteAmounts] = useState<Record<string, number>>({});
 
-  const { data: ticketBalance }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "userUnusedTickets", args: address ? [address] : undefined, query: { enabled: !!address } });
+  const { data: ticketBalance, refetch: refetchTickets } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "userUnusedTickets",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address, refetchInterval: 5_000 },
+  });
+
   const { data: topScorerFinalized } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalized" });
   const { data: finalTopScorer }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" });
 
-  // Global votes per player
+  // Global votes per player — 5s refresh for live vote bar
   const playerVoteQueries = TOP_SCORER_PLAYERS.map(p =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getPlayerVotes", args: [p.name] })
-  );
-
-  // User votes per player (to compute total purchased)
-  const userVoteQueries = TOP_SCORER_PLAYERS.map(p =>
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useReadContract({
       address: CONTRACT_ADDRESS, abi: ABI,
-      functionName: "getUserVotesForPlayer",
-      args: address ? [address, p.name] : undefined,
-      query: { enabled: !!address },
+      functionName: "getPlayerVotes",
+      args: [p.name],
+      query: { refetchInterval: 5_000 },
     })
   );
 
   const { writeContract: buyTickets, data: buyHash, isPending: isBuying } = useWriteContract();
   const { isLoading: isBuyConfirming, isSuccess: isBuySuccess } = useWaitForTransactionReceipt({ hash: buyHash });
-  const { writeContract: vote, isPending: isVoting }             = useWriteContract();
+  const { writeContract: vote, data: voteHash, isPending: isVoting }             = useWriteContract();
+  const { isLoading: isVoteConfirming, isSuccess: isVoteSuccess } = useWaitForTransactionReceipt({ hash: voteHash });
   const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
   const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
+  // Immediately refetch after any successful tx
+  useEffect(() => {
+    if (isBuySuccess || isVoteSuccess) {
+      refetchTickets();
+      queryClient.invalidateQueries();
+    }
+  }, [isBuySuccess, isVoteSuccess, refetchTickets, queryClient]);
+
   const unusedTickets = Number(ticketBalance ?? 0n);
-  const totalVoted    = userVoteQueries.reduce((sum, q) => sum + Number(q.data ?? 0n), 0);
-  const totalPurchased = unusedTickets + totalVoted;
-  const totalCost      = TICKET_PRICE * BigInt(ticketQty);
+  const totalCost     = TICKET_PRICE * BigInt(ticketQty);
 
   const playersWithVotes = TOP_SCORER_PLAYERS
     .map((p, i) => ({ ...p, votes: Number(playerVoteQueries[i].data ?? 0n) }))
@@ -56,36 +66,15 @@ export function TopScorerPage() {
   const maxVotes = Math.max(...playersWithVotes.map(p => p.votes), 1);
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    if (raw === "") { setTicketQty(1); return; }
-    const num = parseInt(raw, 10);
+    const num = parseInt(e.target.value, 10);
     if (!isNaN(num) && num >= 1) setTicketQty(num);
+    else if (e.target.value === "") setTicketQty(1);
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-2xl mx-auto space-y-5">
 
-      {/* Ticket stats — only when connected */}
-      {isConnected && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="glass-card p-4 text-center">
-            <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>
-              Unused Tickets
-            </p>
-            <p className="text-2xl font-black text-white">{unusedTickets}</p>
-          </div>
-          <div className="glass-card p-4 text-center">
-            <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>
-              Total Purchased
-            </p>
-            <p className="text-2xl font-black text-white">
-              {userVoteQueries.some(q => q.isPending) ? "—" : totalPurchased}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Claim */}
+      {/* Claim banner */}
       {topScorerFinalized && isConnected && (
         <div className="glass-card p-5 flex items-center justify-between gap-4"
           style={{ borderColor: "rgba(251,191,36,0.4)", background: "rgba(251,191,36,0.05)" }}>
@@ -97,7 +86,8 @@ export function TopScorerPage() {
               {t.ts_winner}: <span className="text-white font-semibold">{finalTopScorer as string}</span>
             </p>
           </div>
-          <button onClick={() => claim({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "claimTopScorerRewards", args: [] })}
+          <button
+            onClick={() => claim({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "claimTopScorerRewards", args: [] })}
             disabled={isClaiming || isClaimConfirming}
             className="btn-neon flex items-center gap-2"
             style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
@@ -119,6 +109,14 @@ export function TopScorerPage() {
               <h2 className="font-black text-white text-lg">{t.ts_buy_title}</h2>
               <p className="text-xs" style={{ color: "#6b7a9a" }}>{t.ts_buy_sub}</p>
             </div>
+            {/* Unused tickets counter — right side */}
+            {isConnected && unusedTickets > 0 && (
+              <div className="ml-auto shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Unused</span>
+                <span className="font-black text-lg text-white">{unusedTickets}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -149,7 +147,7 @@ export function TopScorerPage() {
                 {t.ts_buy_btn} · {formatEth(totalCost, 4)} ETH
               </button>
             ) : (
-              <button onClick={() => login()} className="btn-neon flex items-center gap-2 whitespace-nowrap">
+              <button onClick={() => login()} className="btn-neon whitespace-nowrap">
                 Connect Wallet
               </button>
             )}
@@ -163,91 +161,103 @@ export function TopScorerPage() {
         </div>
       )}
 
-      {/* Vote section */}
-      <div className="space-y-3">
+      {/* Unused tickets alert — animated */}
+      {isConnected && unusedTickets > 0 && !topScorerFinalized && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm"
+          style={{
+            background: "rgba(251,191,36,0.07)",
+            border: "1px solid rgba(251,191,36,0.3)",
+            color: "#fbbf24",
+            animation: "ticketAlertPulse 2.5s ease-in-out infinite",
+          }}>
+          {/* Sonar ping dot */}
+          <span className="relative flex h-3 w-3 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+              style={{ background: "#fbbf24" }} />
+            <span className="relative inline-flex rounded-full h-3 w-3"
+              style={{ background: "#fbbf24" }} />
+          </span>
+          <span>
+            You have <strong className="text-white">{unusedTickets}</strong> unused ticket{unusedTickets !== 1 ? "s" : ""}! Vote for a player below.
+          </span>
+        </div>
+      )}
+
+      {/* Vote list */}
+      <div className="glass-card p-5 space-y-3">
         <h2 className="font-black text-white text-lg flex items-center gap-2">
           <Zap size={20} style={{ color: "#8b5cf6" }} /> {t.ts_vote_title}
         </h2>
-        {unusedTickets > 0 && !topScorerFinalized && (
-          <div className="px-3 py-2 rounded-xl text-sm font-semibold"
-            style={{ background: "rgba(139,92,246,0.08)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.2)" }}>
-            ⚡ {unusedTickets} {t.ts_unused}
-          </div>
-        )}
 
-        {/* Player grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="space-y-2">
           {playersWithVotes.map((player) => {
-            const pct    = (player.votes / maxVotes) * 100;
-            const myVote = voteAmounts[player.name] ?? 1;
-            const canVote = unusedTickets > 0 && !topScorerFinalized;
+            const pct      = (player.votes / maxVotes) * 100;
+            const myVote   = voteAmounts[player.name] ?? 1;
+            const canVote  = unusedTickets > 0 && !topScorerFinalized && isConnected;
             const isWinner = topScorerFinalized && finalTopScorer === player.name;
 
             return (
-              <div
-                key={player.name}
-                className="rounded-2xl overflow-hidden flex flex-col"
+              <div key={player.name}
+                className="p-3 rounded-xl space-y-2"
                 style={{
-                  background: isWinner ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${isWinner ? "rgba(251,191,36,0.35)" : "rgba(255,255,255,0.06)"}`,
-                }}
-              >
-                {/* Flag */}
-                <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                  background: isWinner ? "rgba(251,191,36,0.06)" : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${isWinner ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.05)"}`,
+                }}>
+
+                <div className="flex items-center gap-3">
+                  {/* Small flag */}
                   <Image
-                    src={getFlagUrl(player.flag, 160)} alt={player.country}
-                    fill className="object-cover" unoptimized
+                    src={getFlagUrl(player.flag, 80)} alt={player.country}
+                    width={28} height={19}
+                    className="rounded object-cover shrink-0" unoptimized
                   />
-                  {isWinner && (
-                    <div className="absolute top-1.5 right-1.5 text-base leading-none">🏆</div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="p-2.5 flex flex-col gap-1.5 flex-1">
-                  <p className="font-bold text-white text-xs leading-tight line-clamp-2">{player.name}</p>
-                  <p className="text-[10px] leading-tight" style={{ color: "#6b7a9a" }}>{player.country}</p>
-
-                  {/* Vote bar */}
-                  <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: isWinner ? "linear-gradient(90deg,#fbbf24,#f59e0b)" : "linear-gradient(90deg,#8b5cf6,#00ff88)" }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-sm truncate">
+                      {isWinner && <span className="mr-1">🏆</span>}
+                      {player.name}
+                    </p>
+                    <p className="text-xs" style={{ color: "#6b7a9a" }}>{player.country}</p>
                   </div>
-                  <p className="font-mono text-[10px] font-bold" style={{ color: isWinner ? "#fbbf24" : "#8b5cf6" }}>
-                    {player.votes.toLocaleString()} votes
-                  </p>
-
-                  {/* Vote input */}
-                  {canVote && (
-                    <div className="flex items-center gap-1 mt-auto pt-1">
-                      <button
-                        onClick={() => setVoteAmounts(v => ({ ...v, [player.name]: Math.max(1, (v[player.name] ?? 1) - 1) }))}
-                        className="w-6 h-6 rounded-md font-bold text-sm flex items-center justify-center shrink-0"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "#6b7a9a" }}>−</button>
-                      <input
-                        type="number" min={1} max={unusedTickets} value={myVote}
-                        onChange={e => {
-                          const v = parseInt(e.target.value, 10);
-                          if (!isNaN(v) && v >= 1 && v <= unusedTickets)
-                            setVoteAmounts(prev => ({ ...prev, [player.name]: v }));
-                        }}
-                        className="flex-1 text-center text-xs font-bold rounded-md py-1 text-white"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", minWidth: 0 }}
-                      />
-                      <button
-                        onClick={() => setVoteAmounts(v => ({ ...v, [player.name]: Math.min(unusedTickets, (v[player.name] ?? 1) + 1) }))}
-                        className="w-6 h-6 rounded-md font-bold text-sm flex items-center justify-center shrink-0"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "#6b7a9a" }}>+</button>
-                      <button
-                        onClick={() => vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] })}
-                        disabled={isVoting}
-                        className="btn-neon text-[10px] py-1 px-2 flex items-center gap-0.5 shrink-0">
-                        {isVoting && <Loader2 size={9} className="animate-spin" />}
-                        {t.ts_vote_btn}
-                      </button>
-                    </div>
-                  )}
+                  <span className="font-mono text-sm font-bold shrink-0"
+                    style={{ color: isWinner ? "#fbbf24" : "#8b5cf6" }}>
+                    {player.votes.toLocaleString()}
+                  </span>
                 </div>
+
+                {/* Vote bar */}
+                <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${pct}%`,
+                      background: isWinner
+                        ? "linear-gradient(90deg,#fbbf24,#f59e0b)"
+                        : "linear-gradient(90deg,#8b5cf6,#00ff88)",
+                    }} />
+                </div>
+
+                {/* Vote input */}
+                {canVote && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min={1} max={unusedTickets} value={myVote}
+                      onChange={e => {
+                        const v = parseInt(e.target.value, 10);
+                        if (!isNaN(v) && v >= 1 && v <= unusedTickets)
+                          setVoteAmounts(prev => ({ ...prev, [player.name]: v }));
+                      }}
+                      className="w-16 text-center text-sm font-bold rounded-lg py-1 text-white"
+                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    />
+                    <button
+                      onClick={() => vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] })}
+                      disabled={isVoting || isVoteConfirming}
+                      className="btn-neon text-xs py-1.5 px-4 flex items-center gap-1">
+                      {(isVoting || isVoteConfirming) && <Loader2 size={11} className="animate-spin" />}
+                      {t.ts_vote_btn}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
