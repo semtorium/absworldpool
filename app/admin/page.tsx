@@ -335,10 +335,10 @@ export default function AdminPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                <select value={ncWinnerId} onChange={e => setNcWinnerId(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }}>
-                  <option value="">— Select winning country —</option>
+                <select value={ncWinnerId} onChange={e => setNcWinnerId(e.target.value)} style={{ ...inputStyle, maxWidth: 280, colorScheme: "dark" }}>
+                  <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select winning country —</option>
                   {activeCountries.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} (#{c.id}) — {(Number(c.pool)/1e18).toFixed(4)} ETH, {c.supply.toString()} NFTs</option>
+                    <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id}) — {(Number(c.pool)/1e18).toFixed(4)} ETH, {c.supply.toString()} NFTs</option>
                   ))}
                 </select>
                 <button
@@ -377,10 +377,10 @@ export default function AdminPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                <select value={tsPlayer} onChange={e => setTsPlayer(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }}>
-                  <option value="">— Select top scorer —</option>
+                <select value={tsPlayer} onChange={e => setTsPlayer(e.target.value)} style={{ ...inputStyle, maxWidth: 300, colorScheme: "dark" }}>
+                  <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select top scorer —</option>
                   {TOP_SCORER_PLAYERS.map(p => (
-                    <option key={p.name} value={p.name}>{p.name} ({p.country})</option>
+                    <option key={p.name} value={p.name} style={{ background: "#0d1117", color: "#fff" }}>{p.name} ({p.country})</option>
                   ))}
                 </select>
                 <button
@@ -411,13 +411,13 @@ export default function AdminPage() {
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>↗️ Advance Stage (Pool Roll-Over)</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>Roll loser's pool into winner's pool after a match.</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <select value={advLoser} onChange={e => setAdvLoser(e.target.value)} style={{ ...inputStyle, maxWidth: 220 }}>
-              <option value="">— Loser (eliminated) —</option>
-              {activeCountries.map(c => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
+            <select value={advLoser} onChange={e => setAdvLoser(e.target.value)} style={{ ...inputStyle, maxWidth: 220, colorScheme: "dark" }}>
+              <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Loser (eliminated) —</option>
+              {activeCountries.map(c => <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id})</option>)}
             </select>
-            <select value={advWinner} onChange={e => setAdvWinner(e.target.value)} style={{ ...inputStyle, maxWidth: 220 }}>
-              <option value="">— Winner (advances) —</option>
-              {activeCountries.map(c => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
+            <select value={advWinner} onChange={e => setAdvWinner(e.target.value)} style={{ ...inputStyle, maxWidth: 220, colorScheme: "dark" }}>
+              <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Winner (advances) —</option>
+              {activeCountries.map(c => <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id})</option>)}
             </select>
             <button
               disabled={!advLoser || !advWinner || advLoser === advWinner || txPending === "advance"}
