@@ -6,20 +6,29 @@ import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useLang } from "@/lib/LanguageContext";
 
-export function PrizeCounter() {
+interface PrizeCounterProps {
+  activeTab?: string;
+}
+
+export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const { t } = useLang();
   const [ethUsd, setEthUsd] = useState<number | null>(null);
+  const isScorer = activeTab === "scorer";
 
-  // totalLockedPrizePool already includes both nations cup + top scorer pools,
-  // net of the 20% dev share. No need to add topScorerPoolBalance separately.
-  const { data: poolWei } = useReadContract({
+  const { data: totalPool } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
     functionName: "totalLockedPrizePool",
     query: { refetchInterval: 30_000 },
   });
 
-  // Fetch ETH/USD price every 60s
+  const { data: tsPool } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    functionName: "topScorerPoolBalance",
+    query: { refetchInterval: 30_000 },
+  });
+
   useEffect(() => {
     const fetchPrice = async () => {
       try {
@@ -29,124 +38,58 @@ export function PrizeCounter() {
         );
         const json = await res.json();
         if (json?.ethereum?.usd) setEthUsd(json.ethereum.usd);
-      } catch {
-        // silently ignore — USD display is optional
-      }
+      } catch { /* silent */ }
     };
     fetchPrice();
     const id = setInterval(fetchPrice, 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const total = poolWei ?? 0n;
-  const ethValue = Number(total) / 1e18;
-  const eth = ethValue.toFixed(4);
+  const pool     = isScorer ? (tsPool ?? 0n) : (totalPool ?? 0n);
+  const ethValue = Number(pool) / 1e18;
+  const eth      = ethValue.toFixed(4);
   const [int, dec] = eth.split(".");
-  const usd = ethUsd !== null ? ethValue * ethUsd : null;
+  const usd      = ethUsd !== null ? ethValue * ethUsd : null;
+
+  const accent    = isScorer ? "#8b5cf6" : "#fbbf24";
+  const accentRgb = isScorer ? "139,92,246" : "251,191,36";
+  const label     = isScorer ? t.ts_pool : t.prize_label;
+  const subtitle  = isScorer
+    ? "Grows with every ticket · Correct voters share 95% of the pool"
+    : "Grows with every mint · Claim when your nation wins";
 
   return (
     <div
       className="prize-hero-wrap"
-      style={{
-        position: "relative",
-        padding: "36px 16px 28px",
-        textAlign: "center",
-        overflow: "hidden",
-      }}
+      style={{ position: "relative", padding: "36px 16px 28px", textAlign: "center", overflow: "hidden" }}
     >
       {/* Background glows */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 80% 120% at 50% 0%, rgba(251,191,36,0.10) 0%, transparent 65%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 50% 80% at 50% 100%, rgba(0,255,136,0.05) 0%, transparent 60%)",
-          pointerEvents: "none",
-        }}
-      />
+      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 80% 120% at 50% 0%, rgba(${accentRgb},0.10) 0%, transparent 65%)`, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 50% 80% at 50% 100%, rgba(0,255,136,0.05) 0%, transparent 60%)", pointerEvents: "none" }} />
 
       {/* Animated ring */}
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "min(480px, 90vw)",
-          height: "min(480px, 90vw)",
-          borderRadius: "50%",
-          border: "1px solid rgba(251,191,36,0.06)",
-          animation: "prizeRingPulse 4s ease-in-out infinite",
-          pointerEvents: "none",
-        }}
-      />
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "min(480px,90vw)", height: "min(480px,90vw)", borderRadius: "50%", border: `1px solid rgba(${accentRgb},0.06)`, animation: "prizeRingPulse 4s ease-in-out infinite", pointerEvents: "none" }} />
 
       {/* Content */}
       <div style={{ position: "relative", zIndex: 1 }}>
         {/* Live label */}
         <div
           className="inline-flex items-center gap-2 mb-4"
-          style={{
-            background: "rgba(251,191,36,0.08)",
-            border: "1px solid rgba(251,191,36,0.2)",
-            borderRadius: "99px",
-            padding: "4px 14px",
-          }}
+          style={{ background: `rgba(${accentRgb},0.08)`, border: `1px solid rgba(${accentRgb},0.2)`, borderRadius: "99px", padding: "4px 14px" }}
         >
           <div className="live-dot" />
-          <span
-            className="text-[10px] font-black tracking-[0.25em] uppercase"
-            style={{ color: "#fbbf24" }}
-          >
-            {t.prize_label}
-          </span>
+          <span className="text-[10px] font-black tracking-[0.25em] uppercase" style={{ color: accent }}>{label}</span>
         </div>
 
         {/* Big number */}
-        <div
-          className="flex items-baseline justify-center"
-          style={{ gap: "2px", lineHeight: 1 }}
-        >
-          <span
-            className="font-black font-mono"
-            style={{
-              fontSize: "clamp(3.5rem, 12vw, 7.5rem)",
-              color: "#fff",
-              textShadow: "0 0 60px rgba(251,191,36,0.25), 0 0 120px rgba(251,191,36,0.10)",
-              letterSpacing: "-0.03em",
-            }}
-          >
+        <div className="flex items-baseline justify-center" style={{ gap: "2px", lineHeight: 1 }}>
+          <span className="font-black font-mono" style={{ fontSize: "clamp(3.5rem,12vw,7.5rem)", color: "#fff", textShadow: `0 0 60px rgba(${accentRgb},0.25), 0 0 120px rgba(${accentRgb},0.10)`, letterSpacing: "-0.03em" }}>
             {int}
           </span>
-          <span
-            className="font-black font-mono"
-            style={{
-              fontSize: "clamp(3rem, 10vw, 6.5rem)",
-              color: "#fbbf24",
-              textShadow: "0 0 40px rgba(251,191,36,0.5)",
-              letterSpacing: "-0.03em",
-            }}
-          >
+          <span className="font-black font-mono" style={{ fontSize: "clamp(3rem,10vw,6.5rem)", color: accent, textShadow: `0 0 40px rgba(${accentRgb},0.5)`, letterSpacing: "-0.03em" }}>
             .{dec}
           </span>
-          <span
-            className="font-black"
-            style={{
-              fontSize: "clamp(1.2rem, 4vw, 2.5rem)",
-              color: "rgba(251,191,36,0.6)",
-              marginLeft: "8px",
-              letterSpacing: "0.05em",
-            }}
-          >
+          <span className="font-black" style={{ fontSize: "clamp(1.2rem,4vw,2.5rem)", color: `rgba(${accentRgb},0.6)`, marginLeft: "8px", letterSpacing: "0.05em" }}>
             ETH
           </span>
         </div>
@@ -154,48 +97,17 @@ export function PrizeCounter() {
         {/* USD equivalent */}
         {usd !== null && (
           <p
-            className="mt-1 font-mono font-bold"
-            style={{ fontSize: "clamp(1rem, 3vw, 1.5rem)", color: "rgba(251,191,36,0.55)" }}
+            className="mt-1 font-mono"
+            style={{ fontSize: "clamp(0.7rem,2vw,0.95rem)", color: `rgba(${accentRgb},0.38)` }}
           >
-            ≈ ${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            est. dollar value ≈ ${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </p>
         )}
 
         {/* Subtitle */}
-        <p
-          className="mt-3 text-sm font-semibold"
-          style={{ color: "rgba(107,122,154,0.9)" }}
-        >
-          Grows with every mint · Claim when your nation wins
+        <p className="mt-3 text-sm font-semibold" style={{ color: "rgba(107,122,154,0.9)" }}>
+          {subtitle}
         </p>
-
-        {/* Stats strip */}
-        <div
-          className="inline-flex items-center gap-0 mt-5 overflow-hidden"
-          style={{
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: "14px",
-            background: "rgba(255,255,255,0.02)",
-          }}
-        >
-          {[
-            { emoji: "⚽", label: "48 Nations" },
-            { emoji: "🌍", label: "3 Host Countries" },
-            { emoji: "🏆", label: "2026 World Cup" },
-          ].map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
-              style={{
-                color: "#6b7a9a",
-                borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none",
-              }}
-            >
-              <span>{s.emoji}</span>
-              <span className="hidden sm:inline">{s.label}</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

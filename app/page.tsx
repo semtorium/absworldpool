@@ -119,7 +119,7 @@ export default function Home() {
       <div className="min-h-screen" style={{ visibility: appReady ? "visible" : "hidden" }}>
         <HoldersTicker />
         <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
-        <PrizeCounter />
+        <PrizeCounter activeTab={activeTab} />
         <main className="max-w-7xl mx-auto px-4 py-6">
           {activeTab === "nations"     && <NationsCupPage />}
           {activeTab === "groups"      && <GroupsPage />}
