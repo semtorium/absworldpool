@@ -9,7 +9,7 @@ import { createPublicClient, http, formatEther, parseAbiItem } from "viem";
 import { abstractTestnet } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0x76F0b5cEa2949f2a22A431a73f5f7F452384f6eA";
+const CONTRACT = "0x7915732167961e61246fD59a26E1ae3167839892";
 
 const COUNTRIES = [
   { id:  1, name: "Qatar" },         { id:  2, name: "Brazil" },

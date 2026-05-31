@@ -5,7 +5,6 @@ export const ABI = [
   { type: "function", name: "paused",                inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "MINT_PRICE",            inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "TICKET_PRICE",          inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
-  { type: "function", name: "maxMintPerWallet",      inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "totalLockedPrizePool",  inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "totalGlobalVolumeETH",  inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "topScorerPoolBalance",  inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
@@ -43,7 +42,6 @@ export const ABI = [
   { type: "function", name: "refundUnusedTickets",    inputs: [], outputs: [], stateMutability: "nonpayable" },
   // ── Write: onlyOwner ─────────────────────────────────────────
   { type: "function", name: "setPaused",             inputs: [{ name: "_paused", type: "bool" }],                   outputs: [], stateMutability: "nonpayable" },
-  { type: "function", name: "setMaxMintPerWallet",   inputs: [{ name: "_max", type: "uint256" }],                   outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setDevWallet",          inputs: [{ name: "_newDevWallet", type: "address" }],          outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setBaseURI",            inputs: [{ name: "_newBaseURI", type: "string" }],             outputs: [], stateMutability: "nonpayable" },
   {
