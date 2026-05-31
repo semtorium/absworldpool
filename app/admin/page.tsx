@@ -340,12 +340,23 @@ export default function AdminPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                <select value={ncWinnerId} onChange={e => setNcWinnerId(e.target.value)} style={{ ...inputStyle, maxWidth: 280, colorScheme: "dark" }}>
+                <select value={ncWinnerId} onChange={e => setNcWinnerId(e.target.value)} style={{ ...inputStyle, maxWidth: 320, colorScheme: "dark" }}>
                   <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select winning country —</option>
-                  {activeCountries.map(c => (
-                    <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id}) — {(Number(c.pool)/1e18).toFixed(4)} ETH, {c.supply.toString()} NFTs</option>
-                  ))}
+                  {COUNTRIES
+                    .map((c, i) => ({ ...c, pool: allPools[c.id] ?? 0n, supply: allSupplies[i] ?? 0n }))
+                    .sort((a, b) => (b.supply > a.supply ? 1 : b.supply < a.supply ? -1 : b.pool > a.pool ? 1 : -1))
+                    .map(c => (
+                      <option key={c.id} value={c.id} style={{ background: "#0d1117", color: c.supply > 0n ? "#fff" : "#9ca3af" }}>
+                        {c.supply === 0n ? "⚠️ " : ""}{c.name} (#{c.id}) — {(Number(c.pool)/1e18).toFixed(4)} ETH · {c.supply.toString()} NFTs
+                      </option>
+                    ))
+                  }
                 </select>
+                {ncWinnerId && allSupplies[COUNTRIES.findIndex(c => c.id === Number(ncWinnerId))] === 0n && (
+                  <div style={{ padding: "10px 14px", background: "rgba(251,191,36,0.07)", borderRadius: 10, border: "1px solid rgba(251,191,36,0.25)", fontSize: 12, color: "#fbbf24" }}>
+                    ⚠️ This country has 0 NFTs minted — nobody will be able to claim rewards.
+                  </div>
+                )}
                 <button
                   disabled={!ncWinnerId || txPending === "finalizeNC"}
                   onClick={() => sendTx("finalizeNationsCup", [BigInt(ncWinnerId)], "finalizeNC")}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
@@ -56,8 +56,11 @@ export function TopScorerPage() {
     }
   }, [isBuySuccess, isVoteSuccess, refetchTickets, queryClient]);
 
-  const unusedTickets = Number(ticketBalance ?? 0n);
-  const totalCost     = TICKET_PRICE * BigInt(ticketQty);
+  const { data: ethBalance } = useBalance({ address, query: { refetchInterval: 5_000 } });
+
+  const unusedTickets  = Number(ticketBalance ?? 0n);
+  const totalCost      = TICKET_PRICE * BigInt(ticketQty);
+  const hasEnoughEth   = !ethBalance || ethBalance.value >= totalCost;
 
   const playersWithVotes = TOP_SCORER_PLAYERS
     .map((p, i) => ({ ...p, votes: Number(playerVoteQueries[i].data ?? 0n) }))
@@ -141,10 +144,12 @@ export function TopScorerPage() {
             {isConnected ? (
               <button
                 onClick={() => buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost })}
-                disabled={isBuying || isBuyConfirming}
-                className="btn-neon flex items-center gap-2 whitespace-nowrap">
+                disabled={isBuying || isBuyConfirming || !hasEnoughEth}
+                title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
+                className="btn-neon flex items-center gap-2 whitespace-nowrap"
+                style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {(isBuying || isBuyConfirming) && <Loader2 size={16} className="animate-spin" />}
-                {t.ts_buy_btn} · {formatEth(totalCost, 4)} ETH
+                {!hasEnoughEth ? "Insufficient ETH" : `${t.ts_buy_btn} · ${formatEth(totalCost, 4)} ETH`}
               </button>
             ) : (
               <button onClick={() => login()} className="btn-neon whitespace-nowrap">

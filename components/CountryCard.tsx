@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, MINT_PRICE, MAX_MINT_PER_WALLET, formatEth } from "@/lib/config";
@@ -39,9 +39,12 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
     query: { enabled: !!address },
   });
 
-  const remaining = MAX_MINT_PER_WALLET - Number(mintCount ?? 0n);
-  const totalCost = MINT_PRICE * BigInt(amount);
-  const hasPool   = poolWei > 0n;
+  const { data: ethBalance } = useBalance({ address });
+
+  const remaining    = MAX_MINT_PER_WALLET - Number(mintCount ?? 0n);
+  const totalCost    = MINT_PRICE * BigInt(amount);
+  const hasPool      = poolWei > 0n;
+  const hasEnoughEth = !ethBalance || ethBalance.value >= totalCost;
 
   const { writeContract, data: txHash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
@@ -130,13 +133,16 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
                 </button>
               </div>
               <button onClick={handleMint}
-                disabled={!isConnected || isLoading || remaining === 0}
-                className="btn-neon w-full text-xs py-2 flex items-center justify-center gap-1.5">
+                disabled={!isConnected || isLoading || remaining === 0 || !hasEnoughEth}
+                title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
+                className="btn-neon w-full text-xs py-2 flex items-center justify-center gap-1.5"
+                style={!hasEnoughEth && isConnected ? { opacity: 0.5, cursor: "not-allowed", background: "rgba(255,60,60,0.12)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {isLoading
                   ? <><Loader2 size={12} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
-                  : isSuccess   ? t.card_minted
-                  : !isConnected ? t.card_connect
+                  : isSuccess      ? t.card_minted
+                  : !isConnected   ? t.card_connect
                   : remaining === 0 ? t.card_max
+                  : !hasEnoughEth  ? "Insufficient ETH"
                   : `${t.card_mint} · ${formatEth(totalCost, 4)} ETH`}
               </button>
             </div>

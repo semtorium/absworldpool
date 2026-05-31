@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 import { LangSwitcher } from "./LangSwitcher";
@@ -55,14 +56,14 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
           <div className="flex items-center justify-between h-16 gap-3">
 
             {/* Logo */}
-            <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
-                style={{ background: "linear-gradient(135deg,#00ff88,#7c3aed)" }}>⚽</div>
-              <span className="font-black text-white tracking-tight hidden md:block"
-                style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+            <Link href="/" className="flex items-center gap-2 shrink-0 no-underline"
+              style={{ textDecoration: "none" }}>
+              <span className="font-black text-white tracking-tight"
+                style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "clamp(0.9rem,3vw,1.05rem)" }}>
                 ABS<span style={{ color: "#00ff88" }}>WorldPool</span>
+                <span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 700 }}> 26</span>
               </span>
-            </div>
+            </Link>
 
             {/* Right: Lang + Wallet/Profile */}
             <div className="flex items-center gap-2 shrink-0">
