@@ -83,12 +83,34 @@ export function HoldersTicker() {
 
   if (holders.length === 0) return null;
 
-  const items = [...holders, ...holders]; // duplicate for seamless loop
-  const duration = Math.max(20, holders.length * 4);
+  // Spacer (100vw) + items + spacer + items → seamless, enters from right edge
+  const duration = Math.max(30, holders.length * 5);
+
+  function ItemList() {
+    return (
+      <>
+        {/* Spacer: pushes content to start at the right edge of the screen */}
+        <span style={{ display: "inline-block", width: "100vw", flexShrink: 0 }} />
+        {holders.map((h, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1.5"
+            style={{ padding: "0 20px", fontSize: "11px", flexShrink: 0 }}
+          >
+            <span style={{ fontSize: "13px" }}>{RANK_EMOJIS[i]}</span>
+            <span className="font-bold" style={{ color: "#f0f4ff" }}>{h.displayName}</span>
+            <span className="font-black font-mono" style={{ color: "#00ff88" }}>
+              {h.totalNfts} NFT
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.1)", margin: "0 4px" }}>·</span>
+          </span>
+        ))}
+      </>
+    );
+  }
 
   return (
     <div
-      className="ticker-outer"
       style={{
         background: "rgba(0,255,136,0.04)",
         borderBottom: "1px solid rgba(0,255,136,0.12)",
@@ -100,7 +122,7 @@ export function HoldersTicker() {
         zIndex: 50,
       }}
     >
-      {/* Left label */}
+      {/* Left label — sticky, sits on top */}
       <div
         className="shrink-0 flex items-center gap-1.5 px-3 text-[10px] font-black tracking-widest uppercase"
         style={{
@@ -116,51 +138,30 @@ export function HoldersTicker() {
         TOP HOLDERS
       </div>
 
-      {/* Scrolling area — must overflow its container */}
-      <div style={{ flex: 1, overflow: "hidden", height: "100%" }}>
-      <div
-        ref={trackRef}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          height: "100%",
-          animation: `tickerScroll ${duration}s linear infinite`,
-          whiteSpace: "nowrap",
-          willChange: "transform",
-        }}
-        onMouseEnter={() => {
-          if (trackRef.current) trackRef.current.style.animationPlayState = "paused";
-        }}
-        onMouseLeave={() => {
-          if (trackRef.current) trackRef.current.style.animationPlayState = "running";
-        }}
-      >
-        {items.map((h, i) => {
-          const rank = i % holders.length;
-          return (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1.5"
-              style={{ padding: "0 20px", fontSize: "11px" }}
-            >
-              <span style={{ fontSize: "13px" }}>{RANK_EMOJIS[rank]}</span>
-              <span className="font-bold" style={{ color: "#f0f4ff" }}>
-                {h.displayName}
-              </span>
-              <span
-                className="font-black font-mono"
-                style={{ color: "#00ff88" }}
-              >
-                {h.totalNfts} NFT
-              </span>
-              <span style={{ color: "rgba(255,255,255,0.1)", margin: "0 4px" }}>
-                ·
-              </span>
-            </span>
-          );
-        })}
+      {/* Scrolling track — overflow hidden wrapper */}
+      <div style={{ flex: 1, overflow: "hidden", height: "100%", position: "relative" }}>
+        <div
+          ref={trackRef}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            height: "100%",
+            animation: `tickerScroll ${duration}s linear infinite`,
+            whiteSpace: "nowrap",
+            willChange: "transform",
+          }}
+          onMouseEnter={() => {
+            if (trackRef.current) trackRef.current.style.animationPlayState = "paused";
+          }}
+          onMouseLeave={() => {
+            if (trackRef.current) trackRef.current.style.animationPlayState = "running";
+          }}
+        >
+          {/* Two identical halves → seamless loop at translateX(-50%) */}
+          <ItemList />
+          <ItemList />
+        </div>
       </div>
-      </div>  {/* scrolling area */}
     </div>
   );
 }

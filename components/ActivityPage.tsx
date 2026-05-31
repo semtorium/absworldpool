@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePublicClient } from "wagmi";
+import { usePublicClient, useAccount } from "wagmi";
+import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -122,6 +123,8 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
 
 export function ActivityPage() {
   const client = usePublicClient();
+  const { isConnected } = useAccount();
+  const { login } = useLoginWithAbstract();
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
   const [loading, setLoading] = useState(true);
@@ -199,6 +202,27 @@ export function ActivityPage() {
     const id = setInterval(fetch, 30_000);
     return () => clearInterval(id);
   }, [client]);
+
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 gap-6">
+        <div style={{
+          width: 80, height: 80, borderRadius: "50%",
+          background: "rgba(0,255,136,0.07)",
+          border: "1px solid rgba(0,255,136,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 36,
+        }}>📡</div>
+        <div className="text-center space-y-2">
+          <p className="text-xl font-black text-white">Live Activity</p>
+          <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to see on-chain transactions</p>
+        </div>
+        <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">
+          Connect Wallet
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">

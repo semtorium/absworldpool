@@ -1,6 +1,7 @@
 "use client";
 
 import { useAccount } from "wagmi";
+import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 import { shortenAddress } from "@/lib/config";
 import { Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
@@ -38,8 +39,30 @@ function PodiumItem({ entry, pos }: { entry: LeaderEntry; pos: 1 | 2 | 3 }) {
 }
 
 export function LeaderboardPage() {
-  const { address } = useAccount();
-  const { t }       = useLang();
+  const { address, isConnected } = useAccount();
+  const { login } = useLoginWithAbstract();
+  const { t }     = useLang();
+
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 gap-6">
+        <div style={{
+          width: 80, height: 80, borderRadius: "50%",
+          background: "rgba(251,191,36,0.07)",
+          border: "1px solid rgba(251,191,36,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 36,
+        }}>🏆</div>
+        <div className="text-center space-y-2">
+          <p className="text-xl font-black text-white">Leaderboard</p>
+          <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to view rankings</p>
+        </div>
+        <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">
+          Connect Wallet
+        </button>
+      </div>
+    );
+  }
   const userEntry   = address ? MOCK.find(e => e.address.toLowerCase() === address.toLowerCase()) : undefined;
 
   return (
