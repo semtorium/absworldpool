@@ -33,10 +33,11 @@ function useCountdown() {
   return { days, hours, mins, secs, lastHour };
 }
 
-const CONTINENTS = ["ALL", "UEFA", "CONMEBOL", "CONCACAF", "CAF", "AFC", "OFC"];
+const FILTERS = ["ALL", "YOURS"] as const;
+type Filter = typeof FILTERS[number];
 
 export function NationsCupPage() {
-  const [filter, setFilter] = useState("ALL");
+  const [filter, setFilter] = useState<Filter>("ALL");
   const countdown = useCountdown();
   const { address } = useAccount();
   const { t } = useLang();
@@ -50,16 +51,39 @@ export function NationsCupPage() {
     query: { enabled: !!address && !!tournamentFinalized },
   });
 
+  // Fetch all 48 country balances for the YOURS filter
+  const { data: allBalances } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOfBatch",
+    args: address
+      ? [
+          Array(COUNTRIES.length).fill(address),
+          COUNTRIES.map(c => BigInt(c.id)),
+        ]
+      : undefined,
+    query: { enabled: !!address, refetchInterval: 30_000 },
+  });
+
   const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
   const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
-  const filtered = (filter === "ALL" ? COUNTRIES : COUNTRIES.filter(c => c.continent === filter))
+  // Build a Set of owned country ids for fast lookup
+  const ownedIds = new Set<number>(
+    allBalances
+      ? COUNTRIES.filter((_, i) => Number(allBalances[i] ?? 0n) > 0).map(c => c.id)
+      : []
+  );
+
+  const baseList = filter === "YOURS"
+    ? COUNTRIES.filter(c => ownedIds.has(c.id))
+    : COUNTRIES;
+
+  const filtered = baseList
     .slice()
     .sort((a, b) => {
       const pa = allPools?.[a.id] ?? 0n;
       const pb = allPools?.[b.id] ?? 0n;
-      if (pa !== pb) return pb > pa ? 1 : -1; // pool descending when different
-      return a.favoriteRank - b.favoriteRank; // fallback: odds favourite first
+      if (pa !== pb) return pb > pa ? 1 : -1;
+      return a.favoriteRank - b.favoriteRank;
     });
 
   const canClaim  = tournamentFinalized && userBalance && Number(userBalance) > 0;
@@ -143,15 +167,32 @@ export function NationsCupPage() {
       )}
 
       {/* Filter */}
-      <div className="flex gap-2 flex-wrap">
-        {CONTINENTS.map(c => (
-          <button key={c} onClick={() => setFilter(c)}
-            className={`px-3 py-1.5 text-xs font-bold transition-all duration-150 ${
-              filter === c ? "tab-pill-active" : "tab-pill-inactive"
-            }`}>
-            {c === "ALL" ? t.nc_filter_all : c}
-          </button>
-        ))}
+      <div className="flex gap-2">
+        <button onClick={() => setFilter("ALL")}
+          className={`px-4 py-1.5 text-xs font-bold transition-all duration-150 ${
+            filter === "ALL" ? "tab-pill-active" : "tab-pill-inactive"
+          }`}>
+          {t.nc_filter_all}
+        </button>
+        <button onClick={() => setFilter("YOURS")}
+          className={`px-4 py-1.5 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 ${
+            filter === "YOURS" ? "tab-pill-active" : "tab-pill-inactive"
+          }`}
+          style={filter === "YOURS" ? {} : { borderColor: "rgba(251,191,36,0.2)", color: "#fbbf24" }}>
+          <span>⚽</span>
+          <span>My NFTs</span>
+          {ownedIds.size > 0 && (
+            <span style={{
+              background: filter === "YOURS" ? "rgba(0,255,136,0.25)" : "rgba(251,191,36,0.15)",
+              borderRadius: "99px",
+              padding: "0 5px",
+              fontSize: "10px",
+              fontWeight: 900,
+            }}>
+              {ownedIds.size}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Grid */}
@@ -159,6 +200,14 @@ export function NationsCupPage() {
         <div className="flex flex-col items-center justify-center py-24 gap-3">
           <Loader2 size={36} className="animate-spin" style={{ color: "#00ff88" }} />
           <p style={{ color: "#6b7a9a" }}>{t.nc_loading}</p>
+        </div>
+      ) : filter === "YOURS" && filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <span style={{ fontSize: "48px" }}>⚽</span>
+          <p className="font-bold text-white text-lg">No NFTs yet</p>
+          <p className="text-sm" style={{ color: "#6b7a9a" }}>
+            {address ? "Mint a country NFT to support your nation!" : "Connect your wallet to see your NFTs"}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">

@@ -1,12 +1,14 @@
 "use client";
 
 import { useReadContract } from "wagmi";
+import { useEffect, useState } from "react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useLang } from "@/lib/LanguageContext";
 
 export function PrizeCounter() {
   const { t } = useLang();
+  const [ethUsd, setEthUsd] = useState<number | null>(null);
 
   // totalLockedPrizePool already includes both nations cup + top scorer pools,
   // net of the 20% dev share. No need to add topScorerPoolBalance separately.
@@ -17,10 +19,30 @@ export function PrizeCounter() {
     query: { refetchInterval: 30_000 },
   });
 
-  const total = poolWei ?? 0n;
+  // Fetch ETH/USD price every 60s
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+          { cache: "no-store" }
+        );
+        const json = await res.json();
+        if (json?.ethereum?.usd) setEthUsd(json.ethereum.usd);
+      } catch {
+        // silently ignore — USD display is optional
+      }
+    };
+    fetchPrice();
+    const id = setInterval(fetchPrice, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const eth = (Number(total) / 1e18).toFixed(4);
+  const total = poolWei ?? 0n;
+  const ethValue = Number(total) / 1e18;
+  const eth = ethValue.toFixed(4);
   const [int, dec] = eth.split(".");
+  const usd = ethUsd !== null ? ethValue * ethUsd : null;
 
   return (
     <div
@@ -128,6 +150,16 @@ export function PrizeCounter() {
             ETH
           </span>
         </div>
+
+        {/* USD equivalent */}
+        {usd !== null && (
+          <p
+            className="mt-1 font-mono font-bold"
+            style={{ fontSize: "clamp(1rem, 3vw, 1.5rem)", color: "rgba(251,191,36,0.55)" }}
+          >
+            ≈ ${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+          </p>
+        )}
 
         {/* Subtitle */}
         <p
