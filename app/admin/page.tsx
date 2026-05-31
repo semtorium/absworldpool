@@ -6,6 +6,7 @@ import { abstractTestnet } from "viem/chains";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
+import { TOP_SCORER_PLAYERS } from "@/lib/config";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -374,15 +375,33 @@ export default function AdminPage() {
               <p style={{ color: "#00ff88", fontWeight: 700 }}>✓ Finalized — {finalScorer}</p>
             </div>
           ) : (
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <input value={tsPlayer} onChange={e => setTsPlayer(e.target.value)} placeholder="e.g. Kylian Mbappe" style={{ ...inputStyle, maxWidth: 260 }} />
-              <button
-                disabled={!tsPlayer.trim() || txPending === "finalizeTS"}
-                onClick={() => sendTx("finalizeTopScorer", [tsPlayer.trim()], "finalizeTS")}
-                style={{ background: !tsPlayer.trim() ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#7c3aed,#6d28d9)", color: !tsPlayer.trim() ? "#4a5568" : "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: !tsPlayer.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                {txPending === "finalizeTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-                {txPending === "finalizeTS" ? "Confirming…" : `Finalize → ${tsPlayer || "..."}`}
-              </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <select value={tsPlayer} onChange={e => setTsPlayer(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }}>
+                  <option value="">— Select top scorer —</option>
+                  {TOP_SCORER_PLAYERS.map(p => (
+                    <option key={p.name} value={p.name}>{p.name} ({p.country})</option>
+                  ))}
+                </select>
+                <button
+                  disabled={!tsPlayer || txPending === "finalizeTS"}
+                  onClick={() => sendTx("finalizeTopScorer", [tsPlayer], "finalizeTS")}
+                  style={{ background: !tsPlayer ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#7c3aed,#6d28d9)", color: !tsPlayer ? "#4a5568" : "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: !tsPlayer ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                  {txPending === "finalizeTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                  {txPending === "finalizeTS" ? "Confirming…" : `Finalize → ${tsPlayer || "..."}`}
+                </button>
+              </div>
+              {tsPlayer && (
+                <div style={{ padding: "12px 16px", background: "rgba(124,58,237,0.06)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)", fontSize: 13 }}>
+                  <p style={{ color: "#a78bfa", fontWeight: 800 }}>
+                    ⚽ Selected: <span style={{ color: "#fff" }}>{tsPlayer}</span>
+                    <span style={{ color: "#6b7a9a", fontWeight: 400 }}> — {TOP_SCORER_PLAYERS.find(p => p.name === tsPlayer)?.country}</span>
+                  </p>
+                  <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 6 }}>
+                    This exact string will be stored on-chain. Users who voted for "{tsPlayer}" will be eligible to claim.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

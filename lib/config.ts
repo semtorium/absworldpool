@@ -15,24 +15,28 @@ export const TICKET_PRICE = BigInt("1800000000000000"); // 0.0018 ETH
 export const MAX_MINT_PER_WALLET = 10;
 
 // ── Gol Kralı Adayları ────────────────────────────────────────
-// Turnuva öncesi güncelle
+// Güncellenme: Mayıs 2026 — FIFA resmi görüntü adları, bahis oranlarına göre sıralanmış
 export const TOP_SCORER_PLAYERS = [
-  { name: "Kylian Mbappe",    country: "France",       flag: "fr" },
-  { name: "Erling Haaland",   country: "Norway",       flag: "no" },
-  { name: "Vinicius Jr",      country: "Brazil",       flag: "br" },
-  { name: "Harry Kane",       country: "England",      flag: "gb-eng" },
-  { name: "Lamine Yamal",     country: "Spain",        flag: "es" },
-  { name: "Pedri",            country: "Spain",        flag: "es" },
-  { name: "Bukayo Saka",      country: "England",      flag: "gb-eng" },
-  { name: "Rodri",            country: "Spain",        flag: "es" },
-  { name: "Jude Bellingham",  country: "England",      flag: "gb-eng" },
-  { name: "Florian Wirtz",    country: "Germany",      flag: "de" },
-  { name: "Jamal Musiala",    country: "Germany",      flag: "de" },
-  { name: "Raphinha",         country: "Brazil",       flag: "br" },
-  { name: "Phil Foden",       country: "England",      flag: "gb-eng" },
-  { name: "Gavi",             country: "Spain",        flag: "es" },
-  { name: "Antoine Griezmann",country: "France",       flag: "fr" },
-  { name: "Ousmane Dembele",  country: "France",       flag: "fr" },
+  { name: "Kylian Mbappé",      country: "France",       flag: "fr"     },
+  { name: "Harry Kane",          country: "England",      flag: "gb-eng" },
+  { name: "Lionel Messi",        country: "Argentina",    flag: "ar"     },
+  { name: "Erling Haaland",      country: "Norway",       flag: "no"     },
+  { name: "Lamine Yamal",        country: "Spain",        flag: "es"     },
+  { name: "Mikel Oyarzabal",     country: "Spain",        flag: "es"     },
+  { name: "Cristiano Ronaldo",   country: "Portugal",     flag: "pt"     },
+  { name: "Vinicius Junior",     country: "Brazil",       flag: "br"     },
+  { name: "Lautaro Martínez",    country: "Argentina",    flag: "ar"     },
+  { name: "Ousmane Dembélé",     country: "France",       flag: "fr"     },
+  { name: "Romelu Lukaku",       country: "Belgium",      flag: "be"     },
+  { name: "Raphinha",            country: "Brazil",       flag: "br"     },
+  { name: "Julián Álvarez",      country: "Argentina",    flag: "ar"     },
+  { name: "Álvaro Morata",       country: "Spain",        flag: "es"     },
+  { name: "Cody Gakpo",          country: "Netherlands",  flag: "nl"     },
+  { name: "Bukayo Saka",         country: "England",      flag: "gb-eng" },
+  { name: "Jude Bellingham",     country: "England",      flag: "gb-eng" },
+  { name: "Florian Wirtz",       country: "Germany",      flag: "de"     },
+  { name: "Kai Havertz",         country: "Germany",      flag: "de"     },
+  { name: "Jean-Philippe Mateta",country: "France",       flag: "fr"     },
 ];
 
 // ── Yardımcı ──────────────────────────────────────────────────
