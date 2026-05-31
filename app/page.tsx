@@ -11,15 +11,17 @@ import { ActivityPage }     from "@/components/ActivityPage";
 import { HoldersTicker }    from "@/components/HoldersTicker";
 import { PrizeCounter }     from "@/components/PrizeCounter";
 import { LoadingScreen }    from "@/components/LoadingScreen";
+import { TermsModal }       from "@/components/TermsModal";
 import { ABI }              from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 
 const STORAGE_KEY = "abs_active_tab";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("nations");
-  const [appReady, setAppReady]   = useState(false);
+  const [activeTab, setActiveTab]   = useState<Tab>("nations");
+  const [appReady, setAppReady]     = useState(false);
   const [showLoader, setShowLoader] = useState(true);
+  const [showTerms, setShowTerms]   = useState(false);
 
   // Prefetch the main contract call so we know when data is ready
   const { data: poolData } = useReadContract({
@@ -38,6 +40,16 @@ export default function Home() {
 
   const handleLoadDone = useCallback(() => {
     setShowLoader(false);
+    const accepted = localStorage.getItem("tos_accepted") === "true";
+    if (accepted) {
+      setAppReady(true);
+    } else {
+      setShowTerms(true);
+    }
+  }, []);
+
+  const handleTermsAccept = useCallback(() => {
+    setShowTerms(false);
     setAppReady(true);
   }, []);
 
@@ -51,6 +63,9 @@ export default function Home() {
     <>
       {showLoader && (
         <LoadingScreen isReady={isDataReady} onDone={handleLoadDone} />
+      )}
+      {showTerms && (
+        <TermsModal onAccept={handleTermsAccept} />
       )}
       <div className="min-h-screen" style={{ visibility: appReady ? "visible" : "hidden" }}>
         <HoldersTicker />
