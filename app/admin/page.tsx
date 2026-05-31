@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useDisconnect } from "wagmi";
+import { injected } from "wagmi/connectors";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -54,7 +54,9 @@ function TxButton({ label, onClick, disabled, isPending, isConfirming, isSuccess
 // ─── Main ────────────────────────────────────────────────────
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
-  const { login } = useLoginWithAbstract();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+  const connectMetaMask = () => connect({ connector: injected() });
 
   // Owner check
   const { data: ownerAddress } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "owner" });
@@ -120,9 +122,11 @@ export default function AdminPage() {
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
         <span style={{ fontSize: 48 }}>🔒</span>
         <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Admin Panel</p>
-        <p style={{ color: "#6b7a9a", fontSize: 14 }}>Connect owner wallet to continue</p>
-        <button onClick={login} style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer" }}>
-          Connect Wallet
+        <p style={{ color: "#6b7a9a", fontSize: 14 }}>Connect with MetaMask to continue</p>
+        <button onClick={connectMetaMask}
+          style={{ background: "linear-gradient(135deg,#f6851b,#e2761b)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 14 }}>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width={22} height={22} alt="MetaMask" />
+          Connect MetaMask
         </button>
       </div>
     </div>
@@ -134,8 +138,13 @@ export default function AdminPage() {
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 48 }}>⛔</span>
         <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Access Denied</p>
-        <p style={{ color: "#6b7a9a", fontSize: 13 }}>Connected: {address?.slice(0,6)}...{address?.slice(-4)}</p>
-        <p style={{ color: "#6b7a9a", fontSize: 13 }}>Owner: {(ownerAddress as string)?.slice(0,6)}...{(ownerAddress as string)?.slice(-4)}</p>
+        <p style={{ color: "#6b7a9a", fontSize: 13 }}>
+          Connected: {address?.slice(0,6)}...{address?.slice(-4)}
+        </p>
+        <button onClick={() => disconnect()}
+          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 18px", color: "#6b7a9a", fontWeight: 700, fontSize: 12, cursor: "pointer", marginTop: 4 }}>
+          Disconnect
+        </button>
         <Link href="/" style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none", fontSize: 14 }}>← Back to site</Link>
       </div>
     </div>
