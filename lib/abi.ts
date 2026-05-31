@@ -1,4 +1,5 @@
 export const ABI = [
+  { type: "function", name: "owner", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" },
   { type: "function", name: "MINT_PRICE", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "TICKET_PRICE", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "totalLockedPrizePool", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
@@ -78,6 +79,22 @@ export const ABI = [
   },
   { type: "function", name: "claimNationsCupRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "claimTopScorerRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
+  // Admin functions (onlyOwner)
+  {
+    type: "function", name: "finalizeNationsCup",
+    inputs: [{ name: "_winningCountryId", type: "uint256" }],
+    outputs: [], stateMutability: "nonpayable",
+  },
+  {
+    type: "function", name: "finalizeTopScorer",
+    inputs: [{ name: "playerName", type: "string" }],
+    outputs: [], stateMutability: "nonpayable",
+  },
+  {
+    type: "function", name: "advanceStage",
+    inputs: [{ name: "loserTeamId", type: "uint256" }, { name: "winnerTeamId", type: "uint256" }],
+    outputs: [], stateMutability: "nonpayable",
+  },
   {
     type: "event", name: "CountryMinted",
     inputs: [
