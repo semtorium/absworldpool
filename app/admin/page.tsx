@@ -76,8 +76,9 @@ export default function AdminPage() {
   const [loading,     setLoading]     = useState(false);
 
   // Tx state
-  const [ncWinnerId, setNcWinnerId] = useState("");
-  const [tsPlayer,   setTsPlayer]   = useState("");
+  const [ncWinnerId,    setNcWinnerId]    = useState("");
+  const [tsPlayer,      setTsPlayer]      = useState("");
+  const [tsCustomInput, setTsCustomInput] = useState("");
   const [advLoser,   setAdvLoser]   = useState("");
   const [advWinner,  setAdvWinner]  = useState("");
   const [txPending,  setTxPending]  = useState<string | null>(null);
@@ -377,31 +378,63 @@ export default function AdminPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                <select value={tsPlayer} onChange={e => setTsPlayer(e.target.value)} style={{ ...inputStyle, maxWidth: 300, colorScheme: "dark" }}>
+                <select
+                  value={tsPlayer}
+                  onChange={e => { setTsPlayer(e.target.value); setTsCustomInput(""); }}
+                  style={{ ...inputStyle, maxWidth: 300, colorScheme: "dark" }}
+                >
                   <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select top scorer —</option>
                   {TOP_SCORER_PLAYERS.map(p => (
                     <option key={p.name} value={p.name} style={{ background: "#0d1117", color: "#fff" }}>{p.name} ({p.country})</option>
                   ))}
+                  <option value="__other__" style={{ background: "#0d1117", color: "#fbbf24" }}>✏️ Other (not in list)…</option>
                 </select>
-                <button
-                  disabled={!tsPlayer || txPending === "finalizeTS"}
-                  onClick={() => sendTx("finalizeTopScorer", [tsPlayer], "finalizeTS")}
-                  style={{ background: !tsPlayer ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#7c3aed,#6d28d9)", color: !tsPlayer ? "#4a5568" : "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: !tsPlayer ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                  {txPending === "finalizeTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-                  {txPending === "finalizeTS" ? "Confirming…" : `Finalize → ${tsPlayer || "..."}`}
-                </button>
               </div>
-              {tsPlayer && (
-                <div style={{ padding: "12px 16px", background: "rgba(124,58,237,0.06)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)", fontSize: 13 }}>
-                  <p style={{ color: "#a78bfa", fontWeight: 800 }}>
-                    ⚽ Selected: <span style={{ color: "#fff" }}>{tsPlayer}</span>
-                    <span style={{ color: "#6b7a9a", fontWeight: 400 }}> — {TOP_SCORER_PLAYERS.find(p => p.name === tsPlayer)?.country}</span>
-                  </p>
-                  <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 6 }}>
-                    This exact string will be stored on-chain. Users who voted for "{tsPlayer}" will be eligible to claim.
-                  </p>
+
+              {tsPlayer === "__other__" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input
+                    value={tsCustomInput}
+                    onChange={e => setTsCustomInput(e.target.value)}
+                    placeholder="Enter exact player name…"
+                    style={{ ...inputStyle, maxWidth: 300 }}
+                  />
+                  <div style={{ padding: "12px 16px", background: "rgba(251,191,36,0.06)", borderRadius: 12, border: "1px solid rgba(251,191,36,0.2)", fontSize: 12 }}>
+                    <p style={{ color: "#fbbf24", fontWeight: 700, marginBottom: 4 }}>⚠️ No votes on record for this player</p>
+                    <p style={{ color: "#6b7a9a" }}>Nobody voted for this player — no one will be able to claim. The top scorer pool will remain in the contract and can be recovered via <strong style={{ color: "#b0bcd4" }}>Withdraw Unclaimed Top Scorer</strong> after 30 days.</p>
+                  </div>
                 </div>
               )}
+
+              {(() => {
+                const finalName = tsPlayer === "__other__" ? tsCustomInput.trim() : tsPlayer;
+                const knownPlayer = TOP_SCORER_PLAYERS.find(p => p.name === tsPlayer);
+                if (!finalName) return null;
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {tsPlayer !== "__other__" && (
+                      <div style={{ padding: "12px 16px", background: "rgba(124,58,237,0.06)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)", fontSize: 13 }}>
+                        <p style={{ color: "#a78bfa", fontWeight: 800 }}>
+                          ⚽ Selected: <span style={{ color: "#fff" }}>{finalName}</span>
+                          <span style={{ color: "#6b7a9a", fontWeight: 400 }}> — {knownPlayer?.country}</span>
+                        </p>
+                        <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 6 }}>
+                          This exact string will be stored on-chain. Users who voted for "{finalName}" will be eligible to claim.
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <button
+                        disabled={txPending === "finalizeTS"}
+                        onClick={() => sendTx("finalizeTopScorer", [finalName], "finalizeTS")}
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                        {txPending === "finalizeTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                        {txPending === "finalizeTS" ? "Confirming…" : `Finalize → ${finalName}`}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
