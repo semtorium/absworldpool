@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
-import { PrizeCounter } from "./PrizeCounter";
 import { LangSwitcher } from "./LangSwitcher";
 import { ProfileDrawer } from "./ProfileDrawer";
 import { useLang } from "@/lib/LanguageContext";
@@ -62,11 +61,6 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                 style={{ fontFamily: "Space Grotesk, sans-serif" }}>
                 ABS<span style={{ color: "#00ff88" }}>WorldPool</span>
               </span>
-            </div>
-
-            {/* FOMO Counter */}
-            <div className="flex-1 flex justify-center">
-              <PrizeCounter />
             </div>
 
             {/* Right: Lang + Wallet/Profile */}

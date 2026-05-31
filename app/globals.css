@@ -120,6 +120,18 @@
   }
   .digit-flip { animation: digitFlip 0.2s ease-out; }
 
+  /* Holders ticker */
+  @keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Prize hero ring pulse */
+  @keyframes prizeRingPulse {
+    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.04); }
+  }
+
   /* Country card flag fill */
   .flag-card {
     position: relative;
