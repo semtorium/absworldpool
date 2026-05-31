@@ -20,14 +20,35 @@ const Ctx = createContext<LangCtx>({
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
-  // Persist to localStorage
   useEffect(() => {
+    // 1. Manual override: user already chose a language → always respect it
     const saved = localStorage.getItem("abs_lang") as Lang | null;
     if (saved && LANGUAGES.find(l => l.code === saved)) {
       setLangState(saved);
-      // Restore dir on refresh — without this, Arabic resets to LTR
       document.documentElement.dir = LANGUAGES.find(x => x.code === saved)?.dir ?? "ltr";
+      return;
     }
+
+    // 2. First visit: detect from browser preferred languages
+    // navigator.languages = ["tr-TR", "tr", "en-US", "en"] etc.
+    const browserLangs = navigator.languages?.length
+      ? navigator.languages
+      : [navigator.language];
+
+    const supported = LANGUAGES.map(l => l.code);
+    let detected: Lang = "en";
+
+    for (const bl of browserLangs) {
+      // exact match first (e.g. "tr"), then prefix match (e.g. "tr-TR" → "tr")
+      const exact  = supported.find(c => c === bl.toLowerCase()) as Lang | undefined;
+      const prefix = supported.find(c => bl.toLowerCase().startsWith(c)) as Lang | undefined;
+      const match  = exact ?? prefix;
+      if (match) { detected = match; break; }
+    }
+
+    setLangState(detected);
+    document.documentElement.dir = LANGUAGES.find(x => x.code === detected)?.dir ?? "ltr";
+    // Do NOT write to localStorage here — only save on explicit user selection
   }, []);
 
   const setLang = (l: Lang) => {
