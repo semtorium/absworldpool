@@ -64,32 +64,35 @@ export default function AdminPage() {
   const [ownerAddress, setOwnerAddress] = useState<Address | null>(null);
 
   // Contract state
-  const [totalPool,   setTotalPool]   = useState<bigint>(0n);
-  const [scorerPool,  setScorerPool]  = useState<bigint>(0n);
-  const [totalVol,    setTotalVol]    = useState<bigint>(0n);
-  const [allPools,    setAllPools]    = useState<bigint[]>([]);
-  const [allSupplies, setAllSupplies] = useState<bigint[]>([]);
-  const [ncFinalized, setNcFinalized] = useState(false);
-  const [tsFinalized, setTsFinalized] = useState(false);
-  const [winningId,   setWinningId]   = useState<bigint>(0n);
-  const [finalScorer, setFinalScorer] = useState("");
-  const [loading,     setLoading]     = useState(false);
+  const [totalPool,      setTotalPool]      = useState<bigint>(0n);
+  const [scorerPool,     setScorerPool]     = useState<bigint>(0n);
+  const [totalVol,       setTotalVol]       = useState<bigint>(0n);
+  const [allPools,       setAllPools]       = useState<bigint[]>([]);
+  const [allSupplies,    setAllSupplies]    = useState<bigint[]>([]);
+  const [ncFinalized,    setNcFinalized]    = useState(false);
+  const [tsFinalized,    setTsFinalized]    = useState(false);
+  const [winningId,      setWinningId]      = useState<bigint>(0n);
+  const [finalScorer,    setFinalScorer]    = useState("");
+  const [isPaused,       setIsPaused]       = useState(false);
+  const [maxMint,        setMaxMint]        = useState<bigint>(10n);
+  const [loading,        setLoading]        = useState(false);
 
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
   const [tsPlayer,      setTsPlayer]      = useState("");
   const [tsCustomInput, setTsCustomInput] = useState("");
-  const [advLoser,   setAdvLoser]   = useState("");
-  const [advWinner,  setAdvWinner]  = useState("");
-  const [txPending,  setTxPending]  = useState<string | null>(null);
-  const [txSuccess,  setTxSuccess]  = useState<string | null>(null);
-  const [txError,    setTxError]    = useState<string | null>(null);
+  const [advLoser,      setAdvLoser]      = useState("");
+  const [advWinner,     setAdvWinner]     = useState("");
+  const [newMaxMint,    setNewMaxMint]    = useState("");
+  const [txPending,     setTxPending]     = useState<string | null>(null);
+  const [txSuccess,     setTxSuccess]     = useState<string | null>(null);
+  const [txError,       setTxError]       = useState<string | null>(null);
 
   // ── Fetch contract data ──
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, sp, tv, ap, ncF, tsF, wId, fs, owner] = await Promise.all([
+      const [tp, sp, tv, ap, ncF, tsF, wId, fs, owner, paused, maxM] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalGlobalVolumeETH" }),
@@ -99,6 +102,8 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "owner" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maxMintPerWallet" }),
       ]);
 
       setTotalPool(tp as bigint);
@@ -110,6 +115,8 @@ export default function AdminPage() {
       setWinningId(wId as bigint);
       setFinalScorer(fs as string);
       setOwnerAddress((owner as string).toLowerCase() as Address);
+      setIsPaused(paused as boolean);
+      setMaxMint(maxM as bigint);
 
       // Fetch supplies for active countries
       const supplies = await Promise.all(
@@ -289,6 +296,8 @@ export default function AdminPage() {
           <Stat label="Total Volume"      value={`${fmt(totalVol)} ETH`}   color="#00ff88" />
           <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#00ff88" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
           <Stat label="Top Scorer"        value={tsFinalized ? "✓ Finalized" : "Active"} color={tsFinalized ? "#00ff88" : "#fbbf24"} sub={tsFinalized ? finalScorer : undefined} />
+          <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#00ff88"} />
+          <Stat label="Max Mint/Wallet"   value={maxMint.toString()} color="#b0bcd4" sub="per country" />
         </div>
 
         {/* Active Countries */}
@@ -440,7 +449,7 @@ export default function AdminPage() {
         </div>
 
         {/* Advance Stage */}
-        <div style={{ ...sectionStyle, borderColor: "rgba(124,58,237,0.15)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(124,58,237,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>↗️ Advance Stage (Pool Roll-Over)</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>Roll loser's pool into winner's pool after a match.</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -459,6 +468,71 @@ export default function AdminPage() {
               {txPending === "advance" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
               {txPending === "advance" ? "Confirming…" : "Roll Pool"}
             </button>
+          </div>
+        </div>
+
+        {/* Contract Config */}
+        <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚙️ Contract Config</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Emergency controls and parameter adjustments.</p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {/* Pause / Unpause */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "16px 20px", borderRadius: 14, background: isPaused ? "rgba(239,68,68,0.07)" : "rgba(255,255,255,0.02)", border: `1px solid ${isPaused ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}` }}>
+              <div>
+                <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>
+                  {isPaused ? "⏸ Contract Paused" : "▶ Contract Running"}
+                </p>
+                <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
+                  {isPaused ? "Mint, ticket purchase and voting are disabled." : "All user actions are enabled."}
+                </p>
+              </div>
+              <button
+                disabled={txPending === "pause"}
+                onClick={() => sendTx("setPaused", [!isPaused], "pause")}
+                style={{
+                  background: isPaused ? "linear-gradient(135deg,#00ff88,#00cc6a)" : "linear-gradient(135deg,#ef4444,#dc2626)",
+                  color: isPaused ? "#050810" : "#fff",
+                  border: "none", borderRadius: 12, padding: "10px 20px",
+                  fontWeight: 800, fontSize: 13, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+                }}>
+                {txPending === "pause" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {txPending === "pause" ? "Confirming…" : isPaused ? "Unpause Contract" : "Pause Contract"}
+              </button>
+            </div>
+
+            {/* Max Mint Per Wallet */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "16px 20px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Max Mint Per Wallet</p>
+                <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
+                  Current: <span style={{ color: "#b0bcd4", fontWeight: 700 }}>{maxMint.toString()}</span> NFTs per country per wallet
+                </p>
+              </div>
+              <input
+                type="number" min="1" max="100"
+                value={newMaxMint}
+                onChange={e => setNewMaxMint(e.target.value)}
+                placeholder={maxMint.toString()}
+                style={{ ...inputStyle, maxWidth: 100, textAlign: "center" }}
+              />
+              <button
+                disabled={!newMaxMint || Number(newMaxMint) < 1 || txPending === "setMaxMint"}
+                onClick={() => sendTx("setMaxMintPerWallet", [BigInt(newMaxMint)], "setMaxMint")}
+                style={{
+                  background: !newMaxMint ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#6366f1,#4f46e5)",
+                  color: !newMaxMint ? "#4a5568" : "#fff",
+                  border: "none", borderRadius: 12, padding: "10px 20px",
+                  fontWeight: 800, fontSize: 13, cursor: !newMaxMint ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                {txPending === "setMaxMint" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {txPending === "setMaxMint" ? "Confirming…" : "Update Limit"}
+              </button>
+            </div>
+
           </div>
         </div>
 
