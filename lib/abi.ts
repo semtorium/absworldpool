@@ -79,6 +79,11 @@ export const ABI = [
   },
   { type: "function", name: "claimNationsCupRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "claimTopScorerRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
+  // Unclaimed recovery (onlyOwner, after 30 days)
+  { type: "function", name: "nationsCupFinalizedAt",  inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "topScorerFinalizedAt",   inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "withdrawUnclaimedNationsCup", inputs: [], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "withdrawUnclaimedTopScorer",  inputs: [], outputs: [], stateMutability: "nonpayable" },
   // Admin functions (onlyOwner)
   {
     type: "function", name: "finalizeNationsCup",
