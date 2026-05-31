@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { Loader2, Minus, Plus } from "lucide-react";
@@ -8,6 +8,7 @@ import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, MINT_PRICE, MAX_MINT_PER_WALLET, formatEth } from "@/lib/config";
 import { getFlagUrl, type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
+import { MintSuccessModal } from "./MintSuccessModal";
 
 interface CountryCardProps {
   country: Country;
@@ -19,8 +20,10 @@ interface CountryCardProps {
 export function CountryCard({ country, poolWei, isWinner, isEliminated }: CountryCardProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
-  const [amount, setAmount]   = useState(1);
-  const [hovered, setHovered] = useState(false);
+  const [amount, setAmount]     = useState(1);
+  const [hovered, setHovered]   = useState(false);
+  const [mintedAmt, setMintedAmt] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
   const { data: mintCount } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
@@ -44,8 +47,13 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
   const isLoading = isPending || isConfirming;
 
+  useEffect(() => {
+    if (isSuccess && txHash) setShowModal(true);
+  }, [isSuccess, txHash]);
+
   const handleMint = () => {
     if (!isConnected) return;
+    setMintedAmt(amount); // capture before tx clears
     writeContract({
       address: CONTRACT_ADDRESS, abi: ABI,
       functionName: "mintCountryNFT",
@@ -55,6 +63,15 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
   };
 
   return (
+    <>
+    {showModal && txHash && (
+      <MintSuccessModal
+        country={country}
+        amount={mintedAmt}
+        txHash={txHash}
+        onClose={() => setShowModal(false)}
+      />
+    )}
     <div className="flag-card"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -127,5 +144,6 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
         )}
       </div>
     </div>
+    </>
   );
 }

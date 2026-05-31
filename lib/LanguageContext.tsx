@@ -23,7 +23,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Persist to localStorage
   useEffect(() => {
     const saved = localStorage.getItem("abs_lang") as Lang | null;
-    if (saved && LANGUAGES.find(l => l.code === saved)) setLangState(saved);
+    if (saved && LANGUAGES.find(l => l.code === saved)) {
+      setLangState(saved);
+      // Restore dir on refresh — without this, Arabic resets to LTR
+      document.documentElement.dir = LANGUAGES.find(x => x.code === saved)?.dir ?? "ltr";
+    }
   }, []);
 
   const setLang = (l: Lang) => {

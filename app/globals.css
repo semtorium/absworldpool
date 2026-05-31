@@ -132,6 +132,19 @@
     50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.04); }
   }
 
+  /* Confetti fall */
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Mint success modal pop-in */
+  @keyframes modalPop {
+    0%   { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+
   /* Country card flag fill */
   .flag-card {
     position: relative;

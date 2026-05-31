@@ -22,14 +22,15 @@ function useCountdown() {
     return () => clearInterval(id);
   }, []);
 
-  if (timeLeft <= 0) return null; // tournament started
+  if (timeLeft <= 0) return null;
 
   const totalSecs = Math.floor(timeLeft / 1000);
   const days  = Math.floor(totalSecs / 86400);
   const hours = Math.floor((totalSecs % 86400) / 3600);
   const mins  = Math.floor((totalSecs % 3600) / 60);
   const secs  = totalSecs % 60;
-  return { days, hours, mins, secs };
+  const lastHour = days === 0 && hours === 0; // switch to min+sec when < 1h
+  return { days, hours, mins, secs, lastHour };
 }
 
 const CONTINENTS = ["ALL", "UEFA", "CONMEBOL", "CONCACAF", "CAF", "AFC", "OFC"];
@@ -79,25 +80,39 @@ export function NationsCupPage() {
           {tournamentFinalized ? (
             <p className="text-xl font-black text-white">{t.nc_finalized}</p>
           ) : countdown === null ? (
-            /* tournament started */
             <div className="flex items-center justify-center gap-1.5">
               <div className="live-dot" />
               <span className="text-xl font-black" style={{ color: "#00ff88" }}>LIVE</span>
             </div>
           ) : (
-            /* counting down */
-            <div className="flex items-center justify-center gap-1 font-mono font-black text-white">
-              {countdown.days > 0 && (
-                <><span className="text-xl">{countdown.days}</span><span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>d</span><span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span></>
-              )}
-              <span className="text-xl">{String(countdown.hours).padStart(2, "0")}</span>
-              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>h</span>
-              <span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span>
-              <span className="text-xl">{String(countdown.mins).padStart(2, "0")}</span>
-              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>m</span>
-              <span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span>
-              <span className="text-xl">{String(countdown.secs).padStart(2, "0")}</span>
-              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>s</span>
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#00ff88" }}>
+                LIVE IN
+              </p>
+              <div className="flex items-baseline justify-center gap-0.5 font-mono font-black text-white">
+                {countdown.lastHour ? (
+                  // last hour: show mm:ss
+                  <>
+                    <span className="text-xl">{String(countdown.mins).padStart(2, "0")}</span>
+                    <span className="text-sm" style={{ color: "#6b7a9a" }}>m</span>
+                    <span className="mx-1 text-sm" style={{ color: "#6b7a9a" }}>:</span>
+                    <span className="text-xl">{String(countdown.secs).padStart(2, "0")}</span>
+                    <span className="text-sm" style={{ color: "#6b7a9a" }}>s</span>
+                  </>
+                ) : (
+                  // normal: d · h · m
+                  <>
+                    {countdown.days > 0 && (
+                      <><span className="text-xl">{countdown.days}</span><span className="text-xs" style={{ color: "#6b7a9a" }}>d</span><span className="mx-1 text-sm" style={{ color: "#6b7a9a" }}>·</span></>
+                    )}
+                    <span className="text-xl">{String(countdown.hours).padStart(2, "0")}</span>
+                    <span className="text-xs" style={{ color: "#6b7a9a" }}>h</span>
+                    <span className="mx-1 text-sm" style={{ color: "#6b7a9a" }}>·</span>
+                    <span className="text-xl">{String(countdown.mins).padStart(2, "0")}</span>
+                    <span className="text-xs" style={{ color: "#6b7a9a" }}>m</span>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
