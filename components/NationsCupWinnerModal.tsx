@@ -47,6 +47,12 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   useEffect(() => {
     if (isSuccess && address) {
       localStorage.setItem(`nc_claimed_${address.toLowerCase()}`, "true");
@@ -90,7 +96,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
 
       {/* Card */}
       <div
-        className="glass-card relative w-full max-w-lg overflow-y-auto"
+        className="glass-card relative w-full max-w-lg overflow-y-auto scrollbar-hide"
         style={{
           maxHeight: "92vh",
           padding: "32px 24px 28px",

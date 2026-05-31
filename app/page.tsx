@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useReadContract, useAccount } from "wagmi";
 import { Navbar, type Tab }              from "@/components/Navbar";
 import { NationsCupPage }                from "@/components/NationsCupPage";
@@ -28,6 +28,11 @@ export default function Home() {
   const [showTsWinner, setShowTsWinner] = useState(false);
 
   const { address } = useAccount();
+  // Keep address accessible inside effects without adding it as a dependency
+  const addressRef = useRef(address);
+  addressRef.current = address;
+  // Ensures modal init logic runs only once after data is ready
+  const modalInitRef = useRef(false);
 
   // Prefetch pools (controls loading screen)
   const { data: poolData } = useReadContract({
@@ -48,20 +53,24 @@ export default function Home() {
     if (saved && valid.includes(saved)) setActiveTab(saved);
   }, []);
 
-  // Decide which winner modals to show after app is ready
+  // Decide which winner modals to show — runs ONCE after data is ready.
+  // Using addressRef so we don't re-trigger this when wallet connects/changes.
   useEffect(() => {
-    if (!appReady) return;
-    const addr = address?.toLowerCase() ?? "";
+    if (!appReady || modalInitRef.current) return;
+    if (ncFinalized === undefined || tsFinalized === undefined) return;
 
-    const ncClaimed = addr && localStorage.getItem(`nc_claimed_${addr}`) === "true";
-    const tsClaimed = addr && localStorage.getItem(`ts_claimed_${addr}`) === "true";
+    modalInitRef.current = true;
+    const addr = addressRef.current?.toLowerCase() ?? "";
+    const ncClaimed = addr ? localStorage.getItem(`nc_claimed_${addr}`) === "true" : false;
+    const tsClaimed = addr ? localStorage.getItem(`ts_claimed_${addr}`) === "true" : false;
 
     if (ncFinalized && !ncClaimed) {
       setShowNcWinner(true);
     } else if (tsFinalized && !tsClaimed) {
       setShowTsWinner(true);
     }
-  }, [appReady, ncFinalized, tsFinalized, address]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appReady, ncFinalized, tsFinalized]);
 
   // When NC modal closes, check if TS should follow
   const handleNcClose = useCallback(() => {

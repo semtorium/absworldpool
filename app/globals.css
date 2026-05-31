@@ -126,6 +126,15 @@
     100% { transform: translateX(-50%); }
   }
 
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Unused ticket alert border pulse */
   @keyframes ticketAlertPulse {
     0%, 100% { border-color: rgba(251,191,36,0.3); box-shadow: none; }
