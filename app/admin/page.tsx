@@ -102,7 +102,7 @@ export default function AdminPage() {
       setTotalPool(tp as bigint);
       setScorerPool(sp as bigint);
       setTotalVol(tv as bigint);
-      setAllPools((ap as bigint[]).slice());
+      setAllPools(Array.from(ap as unknown as bigint[]));
       setNcFinalized(ncF as boolean);
       setTsFinalized(tsF as boolean);
       setWinningId(wId as bigint);
