@@ -2,7 +2,7 @@ import { abstractTestnet } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x33702d60BDb2630DDED90b066364Be988C216eF4" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0x545CCD611A96F6C8EF1253A4217A7cbBb87Fac97" as `0x${string}`;
 
 // ── Ağ ────────────────────────────────────────────────────────
 export const CHAIN = abstractTestnet;

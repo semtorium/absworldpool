@@ -9,7 +9,7 @@ import { createPublicClient, http, formatEther, parseAbiItem } from "viem";
 import { abstractTestnet } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0x33702d60BDb2630DDED90b066364Be988C216eF4";
+const CONTRACT = "0x545CCD611A96F6C8EF1253A4217A7cbBb87Fac97";
 
 const COUNTRIES = [
   { id:  1, name: "Qatar" },         { id:  2, name: "Brazil" },
@@ -77,6 +77,8 @@ const ABI = [
   { type:"event",    name:"PoolRolledOver",         inputs:[{name:"loserId",type:"uint256",indexed:true},{name:"winnerId",type:"uint256",indexed:true},{name:"transferredAmount",type:"uint256"}] },
   { type:"event",    name:"NationsCupFinalized",    inputs:[{name:"winningId",type:"uint256",indexed:true},{name:"totalPoolSize",type:"uint256"}] },
   { type:"event",    name:"TopScorerFinalizedEvent",inputs:[{name:"playerName",type:"string"},{name:"totalPoolSize",type:"uint256"}] },
+  { type:"event",    name:"NationsCupClaimed",      inputs:[{name:"user",type:"address",indexed:true},{name:"reward",type:"uint256"},{name:"timestamp",type:"uint256"}] },
+  { type:"event",    name:"TopScorerClaimed",       inputs:[{name:"user",type:"address",indexed:true},{name:"reward",type:"uint256"},{name:"timestamp",type:"uint256"}] },
   { type:"event",    name:"TransferSingle",         inputs:[{name:"operator",type:"address",indexed:true},{name:"from",type:"address",indexed:true},{name:"to",type:"address",indexed:true},{name:"id",type:"uint256"},{name:"value",type:"uint256"}] },
   { type:"event",    name:"TransferBatch",          inputs:[{name:"operator",type:"address",indexed:true},{name:"from",type:"address",indexed:true},{name:"to",type:"address",indexed:true},{name:"ids",type:"uint256[]"},{name:"values",type:"uint256[]"}] },
 ];
@@ -145,20 +147,16 @@ async function main() {
   const playerVotes = await Promise.all(PLAYERS.map(p => read("getPlayerVotes", [p])));
 
   // Fetch events
-  const [mintLogs, ticketLogs, voteLogs, rolloverLogs, ncFinalLogs, tsFinalLogs] = await Promise.all([
+  const [mintLogs, ticketLogs, voteLogs, rolloverLogs, ncFinalLogs, tsFinalLogs, ncClaimLogs, tsClaimLogs] = await Promise.all([
     getLogs("CountryMinted"),
     getLogs("TicketPurchased"),
     getLogs("VoteCast"),
     getLogs("PoolRolledOver"),
     getLogs("NationsCupFinalized"),
     getLogs("TopScorerFinalizedEvent"),
+    getLogs("NationsCupClaimed"),
+    getLogs("TopScorerClaimed"),
   ]);
-
-  // Claim detection: TransferSingle burns (to == 0x0) = NC claims
-  const burnLogs = (await getLogs("TransferSingle")).filter(
-    l => l.args.from !== "0x0000000000000000000000000000000000000000" &&
-         l.args.to   === "0x0000000000000000000000000000000000000000"
-  );
 
   // ── Aggregate ──
   const totalVolEth  = BigInt(totalVolume);
@@ -181,8 +179,8 @@ async function main() {
 
   const totalPlayerVotes = activePlayers.reduce((a, p) => a + p.votes, 0);
 
-  // NC claims from burn events
-  const ncClaimers = new Set(burnLogs.map(l => l.args.from?.toLowerCase()));
+  const ncClaimedTotal = ncClaimLogs.reduce((a, l) => a + BigInt(l.args.reward ?? 0n), 0n);
+  const tsClaimedTotal = tsClaimLogs.reduce((a, l) => a + BigInt(l.args.reward ?? 0n), 0n);
 
   // ── OUTPUT ──
   console.log(title("ABS WORLDPOOL — COMMUNITY TEST REPORT"));
@@ -218,7 +216,7 @@ async function main() {
   console.log(`  Total NFTs Minted     : ${totalMints}`);
   console.log(`  Active Countries      : ${activeCountries.length} / 48`);
   console.log(`  Unique Minter Wallets : ${uniqueMinters}`);
-  console.log(`  NC Claim Events (burns): ${ncClaimers.size} wallets claimed`);
+  console.log(`  NC Claims             : ${ncClaimLogs.length} wallets — ${ETH(ncClaimedTotal)} ETH paid out`);
 
   if (activeCountries.length > 0) {
     console.log(`\n  Country Breakdown (sorted by pool):`);
@@ -258,6 +256,7 @@ async function main() {
   console.log(`  Total Tickets Bought : ${totalTickets}`);
   console.log(`  Total Votes Cast     : ${totalVotesCast}`);
   console.log(`  Unique Voter Wallets : ${uniqueVoters}`);
+  console.log(`  TS Claims            : ${tsClaimLogs.length} wallets — ${ETH(tsClaimedTotal)} ETH paid out`);
 
   if (activePlayers.length > 0) {
     console.log(`\n  Player Vote Distribution (sorted by votes):`);
@@ -309,7 +308,8 @@ async function main() {
   console.log(`  PoolRolledOver events       : ${rolloverLogs.length}`);
   console.log(`  NationsCupFinalized events  : ${ncFinalLogs.length}`);
   console.log(`  TopScorerFinalized events   : ${tsFinalLogs.length}`);
-  console.log(`  ERC-1155 Burn events (NC claims): ${burnLogs.length}`);
+  console.log(`  NationsCupClaimed events    : ${ncClaimLogs.length}`);
+  console.log(`  TopScorerClaimed events     : ${tsClaimLogs.length}`);
 
   if (mintLogs.length > 0) {
     console.log(`\n  All CountryMinted events:`);

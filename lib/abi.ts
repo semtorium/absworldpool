@@ -101,6 +101,22 @@ export const ABI = [
     outputs: [], stateMutability: "nonpayable",
   },
   {
+    type: "event", name: "NationsCupClaimed",
+    inputs: [
+      { name: "user",   type: "address", indexed: true },
+      { name: "reward", type: "uint256", indexed: false },
+      { name: "timestamp", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event", name: "TopScorerClaimed",
+    inputs: [
+      { name: "user",   type: "address", indexed: true },
+      { name: "reward", type: "uint256", indexed: false },
+      { name: "timestamp", type: "uint256", indexed: false },
+    ],
+  },
+  {
     type: "event", name: "CountryMinted",
     inputs: [
       { name: "user", type: "address", indexed: true },
