@@ -4,6 +4,7 @@ import { useMemo, useEffect } from "react";
 import Image from "next/image";
 import { X, ExternalLink } from "lucide-react";
 import { getFlagUrl, type Country } from "@/lib/countries";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Props {
   country: Country;
@@ -20,6 +21,8 @@ const CONFETTI_COLORS = [
 const EXPLORER = "https://explorer.testnet.abs.xyz/tx/";
 
 export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
+  const { t } = useLang();
+
   const pieces = useMemo(() =>
     Array.from({ length: 70 }, (_, i) => ({
       id: i,
@@ -30,7 +33,6 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
       size: `${6 + Math.floor(Math.random() * 8)}px`,
       borderRadius: Math.random() > 0.55 ? "50%" : "2px",
     })),
-  // pieces are random and intentionally stable after first render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   []);
 
@@ -89,8 +91,8 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-5xl mb-3">🎉</div>
-          <h2 className="text-2xl font-black text-white">Tebrikler!</h2>
-          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>NFT başarıyla mintlendi</p>
+          <h2 className="text-2xl font-black text-white">{t.modal_congrats}</h2>
+          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>{t.modal_success}</p>
         </div>
 
         {/* Country */}
@@ -104,7 +106,7 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
           <div className="min-w-0 flex-1">
             <p className="font-black text-white text-lg leading-tight">{country.name}</p>
             <p className="text-sm mt-0.5 font-semibold" style={{ color: "#00ff88" }}>
-              {amount} NFT mintlendi
+              {amount} {t.modal_nft_count}
             </p>
           </div>
           <div className="text-2xl font-black font-mono shrink-0" style={{ color: "#fbbf24" }}>
@@ -118,15 +120,15 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
           style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
         >
           <div className="flex justify-between items-center">
-            <span style={{ color: "#6b7a9a" }}>Token ID</span>
+            <span style={{ color: "#6b7a9a" }}>{t.modal_token_id}</span>
             <span className="font-mono font-bold text-white">#{country.id}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span style={{ color: "#6b7a9a" }}>Ülke</span>
-            <span className="font-bold text-white">{country.name} · Grup {country.group}</span>
+            <span style={{ color: "#6b7a9a" }}>{t.modal_country_label}</span>
+            <span className="font-bold text-white">{country.name} · {country.group}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span style={{ color: "#6b7a9a" }}>Tx Hash</span>
+            <span style={{ color: "#6b7a9a" }}>{t.modal_tx_label}</span>
             <span className="font-mono text-xs text-white">{shortHash}</span>
           </div>
         </div>
@@ -140,11 +142,11 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
           style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", color: "#00ff88" }}
         >
           <ExternalLink size={15} />
-          Explorer&apos;da Gör
+          {t.modal_explorer_btn}
         </a>
 
         <button onClick={onClose} className="btn-neon w-full text-sm py-3">
-          Harika! 🚀
+          {t.modal_close_btn}
         </button>
       </div>
     </div>

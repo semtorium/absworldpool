@@ -116,11 +116,14 @@ export function HoldersTicker() {
         TOP HOLDERS
       </div>
 
-      {/* Scrolling track */}
+      {/* Scrolling area — must overflow its container */}
+      <div style={{ flex: 1, overflow: "hidden", height: "100%" }}>
       <div
         ref={trackRef}
-        className="ticker-track flex items-center"
         style={{
+          display: "inline-flex",
+          alignItems: "center",
+          height: "100%",
           animation: `tickerScroll ${duration}s linear infinite`,
           whiteSpace: "nowrap",
           willChange: "transform",
@@ -157,6 +160,7 @@ export function HoldersTicker() {
           );
         })}
       </div>
+      </div>  {/* scrolling area */}
     </div>
   );
 }

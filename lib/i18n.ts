@@ -1,8 +1,9 @@
-export type Lang = "en" | "tr" | "es" | "pt" | "ar";
+export type Lang = "en" | "tr" | "es" | "pt" | "ar" | "ko";
 
 export const LANGUAGES: { code: Lang; label: string; flag: string; dir: "ltr" | "rtl" }[] = [
   { code: "en", label: "English",    flag: "🇬🇧", dir: "ltr" },
   { code: "tr", label: "Türkçe",     flag: "🇹🇷", dir: "ltr" },
+  { code: "ko", label: "한국어",      flag: "🇰🇷", dir: "ltr" },
   { code: "es", label: "Español",    flag: "🇪🇸", dir: "ltr" },
   { code: "pt", label: "Português",  flag: "🇧🇷", dir: "ltr" },
   { code: "ar", label: "العربية",    flag: "🇸🇦", dir: "rtl" },
@@ -87,6 +88,16 @@ const t = {
     lb_your_pos:    "Your Position",
     lb_not_ranked:  "Not ranked yet",
     lb_pts:         "pts",
+
+    // Mint success modal
+    modal_congrats:      "Congratulations!",
+    modal_success:       "NFT successfully minted",
+    modal_nft_count:     "NFTs minted",
+    modal_token_id:      "Token ID",
+    modal_country_label: "Country",
+    modal_tx_label:      "Tx Hash",
+    modal_explorer_btn:  "View on Explorer",
+    modal_close_btn:     "Awesome! 🚀",
   },
 
   tr: {
@@ -160,6 +171,15 @@ const t = {
     lb_your_pos:    "Senin Sıran",
     lb_not_ranked:  "Henüz sıralamada değilsin",
     lb_pts:         "puan",
+
+    modal_congrats:      "Tebrikler!",
+    modal_success:       "NFT başarıyla mintlendi",
+    modal_nft_count:     "NFT mintlendi",
+    modal_token_id:      "Token ID",
+    modal_country_label: "Ülke",
+    modal_tx_label:      "Tx Hash",
+    modal_explorer_btn:  "Explorer'da Gör",
+    modal_close_btn:     "Harika! 🚀",
   },
 
   es: {
@@ -233,6 +253,15 @@ const t = {
     lb_your_pos:    "Tu Posición",
     lb_not_ranked:  "Aún no clasificado",
     lb_pts:         "pts",
+
+    modal_congrats:      "¡Felicidades!",
+    modal_success:       "NFT minteado con éxito",
+    modal_nft_count:     "NFTs minteados",
+    modal_token_id:      "Token ID",
+    modal_country_label: "País",
+    modal_tx_label:      "Tx Hash",
+    modal_explorer_btn:  "Ver en Explorer",
+    modal_close_btn:     "¡Genial! 🚀",
   },
 
   pt: {
@@ -306,6 +335,15 @@ const t = {
     lb_your_pos:    "Sua Posição",
     lb_not_ranked:  "Ainda não classificado",
     lb_pts:         "pts",
+
+    modal_congrats:      "Parabéns!",
+    modal_success:       "NFT mintado com sucesso",
+    modal_nft_count:     "NFTs mintados",
+    modal_token_id:      "Token ID",
+    modal_country_label: "País",
+    modal_tx_label:      "Tx Hash",
+    modal_explorer_btn:  "Ver no Explorer",
+    modal_close_btn:     "Incrível! 🚀",
   },
 
   ar: {
@@ -379,6 +417,97 @@ const t = {
     lb_your_pos:    "ترتيبك",
     lb_not_ranked:  "غير مصنف بعد",
     lb_pts:         "نقطة",
+
+    modal_congrats:      "تهانينا!",
+    modal_success:       "تم سك NFT بنجاح",
+    modal_nft_count:     "NFT تم سكها",
+    modal_token_id:      "معرف الرمز",
+    modal_country_label: "الدولة",
+    modal_tx_label:      "التجزئة",
+    modal_explorer_btn:  "عرض في المستكشف",
+    modal_close_btn:     "رائع! 🚀",
+  },
+
+  ko: {
+    connect:        "AGW 연결",
+    disconnect:     "연결 해제",
+    tab_nations:    "네이션스컵",
+    tab_groups:     "조 편성",
+    tab_scorer:     "득점왕",
+    tab_leaderboard:"리더보드",
+
+    prize_label:    "프라이즈 풀",
+
+    nc_pool:        "네이션스컵 풀",
+    nc_teams:       "참가팀",
+    nc_status:      "현황",
+    nc_live:        "🔴 라이브",
+    nc_finalized:   "🏆 종료",
+    nc_claim_title: "보상을 받을 수 있습니다!",
+    nc_claim_sub:   "우승 NFT",
+    nc_claim_btn:   "ETH 받기",
+    nc_claimed:     "✓ 수령 완료!",
+    nc_filter_all:  "전체",
+    nc_loading:     "풀 불러오는 중…",
+
+    card_pool:      "풀",
+    card_no_pool:   "풀 없음",
+    card_hold:      "보유",
+    card_nft:       "NFT",
+    card_mint:      "민트",
+    card_minting:   "민팅 중…",
+    card_confirming:"확인 중…",
+    card_minted:    "✓ 민팅 완료!",
+    card_connect:   "지갑 연결",
+    card_max:       "한도 초과",
+    card_left:      "남음",
+    card_champion:  "🏆 챔피언",
+
+    grp_title:      "2026 FIFA 월드컵 조 편성",
+    grp_sub:        "2026년 6월 11일 – 7월 19일 · 12개 조 · 48개 팀",
+    grp_hosts:      "🏟️ 미국 · 캐나다 · 멕시코",
+    grp_format_note:"조별 상위 2팀 + 최고 3위 8팀 → 32강",
+    grp_format:     "대회 방식",
+    grp_phase1:     "조별리그",
+    grp_phase1_desc:"조당 4팀, 리그 방식. 상위 2팀 진출.",
+    grp_phase2:     "32강",
+    grp_phase2_desc:"조 1·2위 24팀 + 최고 3위 8팀.",
+    grp_phase3:     "토너먼트",
+    grp_phase3_desc:"32강부터 결승까지 단판 승부.",
+
+    ts_pool:        "프라이즈 풀",
+    ts_tickets:     "내 티켓",
+    ts_finalized:   "대회 종료!",
+    ts_winner:      "우승자",
+    ts_claim:       "받기",
+    ts_buy_title:   "득점왕 티켓 구매",
+    ts_buy_sub:     "티켓 1개 = 투표 1회 · 정답자가 풀의 95% 분배",
+    ts_buy_btn:     "구매",
+    ts_bought:      "티켓 구매 완료!",
+    ts_vote_title:  "득점왕 투표",
+    ts_unused:      "미사용 티켓",
+    ts_vote_btn:    "투표",
+
+    lb_title:       "리더보드",
+    lb_formula:     "점수 = (민트 × 10) + (투표 × 5)",
+    lb_live_note:   "⚡ Envio 인덱서 설정 후 실시간 데이터",
+    lb_rank:        "순위",
+    lb_wallet:      "지갑",
+    lb_mints:       "민트",
+    lb_votes:       "투표",
+    lb_points:      "점수",
+    lb_your_pos:    "내 순위",
+    lb_not_ranked:  "미등록",
+    lb_pts:         "점",
+
+    modal_congrats:      "축하합니다!",
+    modal_success:       "NFT 민팅 완료!",
+    modal_nft_count:     "NFT 민팅됨",
+    modal_token_id:      "토큰 ID",
+    modal_country_label: "국가",
+    modal_tx_label:      "Tx 해시",
+    modal_explorer_btn:  "탐색기에서 보기",
+    modal_close_btn:     "대박! 🚀",
   },
 } as const;
 
