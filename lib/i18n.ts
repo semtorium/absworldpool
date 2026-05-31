@@ -19,7 +19,7 @@ const t = {
     tab_leaderboard:"Leaderboard",
 
     // Prize Counter
-    prize_label:    "Total System Prize Pool",
+    prize_label:    "Prize Pool",
 
     // Nations Cup
     nc_pool:        "Nations Cup Pool",
@@ -97,7 +97,7 @@ const t = {
     tab_scorer:     "Gol Kralı",
     tab_leaderboard:"Liderlik Tablosu",
 
-    prize_label:    "Toplam Ödül Havuzu",
+    prize_label:    "Ödül Havuzu",
 
     nc_pool:        "Milletler Kupası Havuzu",
     nc_teams:       "Katılan Takımlar",
@@ -170,7 +170,7 @@ const t = {
     tab_scorer:     "Máx. Goleador",
     tab_leaderboard:"Clasificación",
 
-    prize_label:    "Premio Total del Sistema",
+    prize_label:    "Premio Pool",
 
     nc_pool:        "Premio Copa Naciones",
     nc_teams:       "Equipos Participantes",
@@ -243,7 +243,7 @@ const t = {
     tab_scorer:     "Artilheiro",
     tab_leaderboard:"Classificação",
 
-    prize_label:    "Prêmio Total do Sistema",
+    prize_label:    "Prize Pool",
 
     nc_pool:        "Prêmio Copa das Nações",
     nc_teams:       "Times Participantes",
@@ -316,7 +316,7 @@ const t = {
     tab_scorer:     "هداف البطولة",
     tab_leaderboard:"لوحة الصدارة",
 
-    prize_label:    "إجمالي جائزة النظام",
+    prize_label:    "Prize Pool",
 
     nc_pool:        "جائزة كأس الأمم",
     nc_teams:       "الفرق المشاركة",

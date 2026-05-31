@@ -12,12 +12,11 @@ import { useLang } from "@/lib/LanguageContext";
 interface CountryCardProps {
   country: Country;
   poolWei: bigint;
-  rank?: number;
   isWinner?: boolean;
   isEliminated?: boolean;
 }
 
-export function CountryCard({ country, poolWei, rank, isWinner, isEliminated }: CountryCardProps) {
+export function CountryCard({ country, poolWei, isWinner, isEliminated }: CountryCardProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
   const [amount, setAmount]   = useState(1);
@@ -76,14 +75,6 @@ export function CountryCard({ country, poolWei, rank, isWinner, isEliminated }: 
             style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)", color: "#fbbf24" }}>
             {t.card_champion}
           </span>
-        </div>
-      )}
-
-      {/* Rank */}
-      {rank && rank <= 3 && !isWinner && (
-        <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
-          style={{ background: rank === 1 ? "#fbbf24" : rank === 2 ? "#9ca3af" : "#cd7c32", color: "#050810" }}>
-          {rank}
         </div>
       )}
 

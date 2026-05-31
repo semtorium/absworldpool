@@ -156,14 +156,13 @@ export function PrizeCounter() {
             { emoji: "⚽", label: "48 Nations" },
             { emoji: "🌍", label: "3 Host Countries" },
             { emoji: "🏆", label: "2026 World Cup" },
-            { emoji: "💰", label: "95% to Winners" },
           ].map((s, i) => (
             <div
               key={i}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
               style={{
                 color: "#6b7a9a",
-                borderRight: i < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none",
               }}
             >
               <span>{s.emoji}</span>

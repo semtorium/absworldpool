@@ -29,7 +29,13 @@ export function NationsCupPage() {
   const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
   const filtered = (filter === "ALL" ? COUNTRIES : COUNTRIES.filter(c => c.continent === filter))
-    .sort((a, b) => Number((allPools?.[b.id] ?? 0n) - (allPools?.[a.id] ?? 0n)));
+    .slice()
+    .sort((a, b) => {
+      const pa = allPools?.[a.id] ?? 0n;
+      const pb = allPools?.[b.id] ?? 0n;
+      if (pa !== pb) return pb > pa ? 1 : -1; // pool descending when different
+      return a.favoriteRank - b.favoriteRank; // fallback: odds favourite first
+    });
 
   const totalPool = allPools ? allPools.slice(1).reduce((s, p) => s + p, 0n) : 0n;
   const canClaim  = tournamentFinalized && userBalance && Number(userBalance) > 0;
@@ -94,9 +100,9 @@ export function NationsCupPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-          {filtered.map((country, i) => (
+          {filtered.map((country) => (
             <CountryCard key={country.id} country={country}
-              poolWei={allPools?.[country.id] ?? 0n} rank={i + 1}
+              poolWei={allPools?.[country.id] ?? 0n}
               isWinner={tournamentFinalized && Number(winningCountryId) === country.id}
               isEliminated={!!tournamentFinalized && Number(winningCountryId) !== country.id} />
           ))}
