@@ -508,7 +508,7 @@ export default function AdminPage() {
               <div style={{ flex: 1, minWidth: 180 }}>
                 <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Max Mint Per Wallet</p>
                 <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
-                  Current: <span style={{ color: "#b0bcd4", fontWeight: 700 }}>{maxMint.toString()}</span> NFTs per country per wallet
+                  Current: <span style={{ color: "#b0bcd4", fontWeight: 700 }}>{maxMint.toString()}</span> NFTs — per country, per wallet (not global)
                 </p>
               </div>
               <input
