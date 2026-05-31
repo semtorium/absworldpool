@@ -54,9 +54,9 @@ function TxButton({ label, onClick, disabled, isPending, isConfirming, isSuccess
 // ─── Main ────────────────────────────────────────────────────
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
+  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const connectMetaMask = () => connect({ connector: injected() });
+  const [showWalletPicker, setShowWalletPicker] = useState(false);
 
   // Owner check
   const { data: ownerAddress } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "owner" });
@@ -116,17 +116,63 @@ export default function AdminPage() {
 
   const refetchAll = () => { r1(); r2(); r3(); };
 
+  // ── Wallet picker modal ──
+  const WalletPicker = () => (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(5,8,16,0.85)", backdropFilter: "blur(12px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 20, padding: "28px", width: "100%", maxWidth: 360,
+        display: "flex", flexDirection: "column", gap: 12,
+      }}>
+        <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 4 }}>Select Wallet</p>
+        {connectors
+          .filter(c => c.id !== "abstract" && c.id !== "abstractGlobalWallet")
+          .map(c => (
+            <button key={c.id}
+              onClick={() => { disconnect(); connect({ connector: c }); setShowWalletPicker(false); }}
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 12, padding: "12px 16px", color: "#fff", fontWeight: 700,
+                fontSize: 14, cursor: "pointer", textAlign: "left",
+                display: "flex", alignItems: "center", gap: 10,
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+            >
+              <span style={{ fontSize: 20 }}>
+                {c.name.toLowerCase().includes("metamask") ? "🦊"
+                  : c.name.toLowerCase().includes("rabby") ? "🐰"
+                  : c.name.toLowerCase().includes("coinbase") ? "🔵"
+                  : "🔐"}
+              </span>
+              {c.name}
+            </button>
+          ))
+        }
+        <button onClick={() => setShowWalletPicker(false)}
+          style={{ background: "transparent", border: "none", color: "#6b7a9a", fontSize: 13, cursor: "pointer", marginTop: 4 }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
   // ── Not connected ──
   if (!isConnected) return (
     <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {showWalletPicker && <WalletPicker />}
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
         <span style={{ fontSize: 48 }}>🔒</span>
         <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Admin Panel</p>
-        <p style={{ color: "#6b7a9a", fontSize: 14 }}>Connect with MetaMask to continue</p>
-        <button onClick={connectMetaMask}
-          style={{ background: "linear-gradient(135deg,#f6851b,#e2761b)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, fontSize: 14 }}>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width={22} height={22} alt="MetaMask" />
-          Connect MetaMask
+        <p style={{ color: "#6b7a9a", fontSize: 14 }}>Connect your owner wallet to continue</p>
+        <button onClick={() => setShowWalletPicker(true)}
+          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer", fontSize: 14 }}>
+          Connect Wallet
         </button>
       </div>
     </div>
@@ -135,17 +181,18 @@ export default function AdminPage() {
   // ── Not owner ──
   if (isConnected && ownerAddress && !isOwner) return (
     <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {showWalletPicker && <WalletPicker />}
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 48 }}>⛔</span>
         <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Access Denied</p>
         <p style={{ color: "#6b7a9a", fontSize: 13 }}>
           Connected: {address?.slice(0,6)}...{address?.slice(-4)}
         </p>
-        <button onClick={() => disconnect()}
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 18px", color: "#6b7a9a", fontWeight: 700, fontSize: 12, cursor: "pointer", marginTop: 4 }}>
-          Disconnect
+        <button onClick={() => setShowWalletPicker(true)}
+          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 12, padding: "10px 22px", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+          Switch Wallet
         </button>
-        <Link href="/" style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none", fontSize: 14 }}>← Back to site</Link>
+        <Link href="/" style={{ color: "#6b7a9a", fontWeight: 700, textDecoration: "none", fontSize: 13 }}>← Back to site</Link>
       </div>
     </div>
   );
@@ -165,6 +212,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ background: "#050810", minHeight: "100vh", color: "#f0f4ff" }}>
+      {showWalletPicker && <WalletPicker />}
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 80px" }}>
 
         {/* Header */}
@@ -175,13 +223,19 @@ export default function AdminPage() {
               🛠️ Admin Panel
             </h1>
             <p style={{ fontSize: 12, color: "#6b7a9a", marginTop: 2 }}>
-              {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)} · Testnet
+              {address?.slice(0,6)}...{address?.slice(-4)} · {CONTRACT_ADDRESS.slice(0,8)}... · Testnet
             </p>
           </div>
-          <button onClick={refetchAll}
-            style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", borderRadius: 10, padding: "8px 16px", color: "#00ff88", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-            ↻ Refresh
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setShowWalletPicker(true)}
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 14px", color: "#6b7a9a", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+              Switch Wallet
+            </button>
+            <button onClick={refetchAll}
+              style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", borderRadius: 10, padding: "8px 16px", color: "#00ff88", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+              ↻ Refresh
+            </button>
+          </div>
         </div>
 
         {/* Live Stats */}
