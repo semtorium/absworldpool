@@ -8,6 +8,8 @@ import { useLang } from "@/lib/LanguageContext";
 export function PrizeCounter() {
   const { t } = useLang();
 
+  // totalLockedPrizePool already includes both nations cup + top scorer pools,
+  // net of the 20% dev share. No need to add topScorerPoolBalance separately.
   const { data: poolWei } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
@@ -15,15 +17,7 @@ export function PrizeCounter() {
     query: { refetchInterval: 30_000 },
   });
 
-  const { data: scorerPool } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: ABI,
-    functionName: "topScorerPoolBalance",
-    query: { refetchInterval: 30_000 },
-  });
-
-  const total =
-    (poolWei ?? 0n) + (scorerPool ?? 0n);
+  const total = poolWei ?? 0n;
 
   const eth = (Number(total) / 1e18).toFixed(4);
   const [int, dec] = eth.split(".");
