@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [provider, setProvider]         = useState<any>(null);
   const [showPicker, setShowPicker]     = useState(false);
   const [ownerAddress, setOwnerAddress] = useState<Address | null>(null);
+  const [chainId, setChainId]           = useState<number | null>(null);
 
   // Contract state
   const [totalPool,      setTotalPool]      = useState<bigint>(0n);
@@ -137,8 +138,40 @@ export default function AdminPage() {
       setAddress(accounts[0].toLowerCase() as Address);
       setProvider(walletProvider);
       setShowPicker(false);
+      // Read current chain
+      const cid = await walletProvider.request({ method: "eth_chainId" });
+      setChainId(parseInt(cid, 16));
+      // Keep chainId in sync when user switches in wallet
+      walletProvider.on?.("chainChanged", (hex: string) => setChainId(parseInt(hex, 16)));
     } catch (e) {
       console.error("Connect error", e);
+    }
+  };
+
+  // ── Switch to Abstract Testnet if needed ──
+  const ensureChain = async () => {
+    const CHAIN_HEX = "0x2B74"; // 11124 decimal
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: CHAIN_HEX }],
+      });
+    } catch (err: any) {
+      // 4902 = chain not yet added in wallet
+      if (err?.code === 4902 || err?.code === -32603) {
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: CHAIN_HEX,
+            chainName: "Abstract Testnet",
+            nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+            rpcUrls: ["https://api.testnet.abs.xyz"],
+            blockExplorerUrls: ["https://explorer.testnet.abs.xyz"],
+          }],
+        });
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -147,6 +180,7 @@ export default function AdminPage() {
     if (!provider || !address) return;
     setTxPending(label); setTxSuccess(null); setTxError(null);
     try {
+      await ensureChain();
       const walletClient = createWalletClient({ account: address, chain: abstractTestnet, transport: custom(provider) });
       const hash = await walletClient.writeContract({ address: CONTRACT_ADDRESS, abi: ABI as any, functionName: fnName, args });
       await publicClient.waitForTransactionReceipt({ hash });
@@ -272,6 +306,21 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Wrong chain warning */}
+        {chainId !== null && chainId !== 11124 && (
+          <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 13 }}>⚠️ Wrong Network — connected to chain {chainId}</p>
+              <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 2 }}>Transactions will automatically switch to Abstract Testnet when you click any action button.</p>
+            </div>
+            <button
+              onClick={async () => { try { await ensureChain(); const cid = await provider.request({ method: "eth_chainId" }); setChainId(parseInt(cid, 16)); } catch {} }}
+              style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 10, padding: "8px 14px", color: "#fbbf24", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              Switch Now
+            </button>
+          </div>
+        )}
 
         {/* Tx feedback */}
         {txSuccess && (
