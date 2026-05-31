@@ -6,6 +6,7 @@ import { NationsCupPage }   from "@/components/NationsCupPage";
 import { GroupsPage }       from "@/components/GroupsPage";
 import { TopScorerPage }    from "@/components/TopScorerPage";
 import { LeaderboardPage }  from "@/components/LeaderboardPage";
+import { ActivityPage }     from "@/components/ActivityPage";
 import { HoldersTicker }    from "@/components/HoldersTicker";
 import { PrizeCounter }     from "@/components/PrizeCounter";
 
@@ -36,6 +37,7 @@ export default function Home() {
         {activeTab === "groups"      && <GroupsPage />}
         {activeTab === "scorer"      && <TopScorerPage />}
         {activeTab === "leaderboard" && <LeaderboardPage />}
+        {activeTab === "activity"    && <ActivityPage />}
       </main>
     </div>
   );

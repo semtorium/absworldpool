@@ -9,7 +9,7 @@ import { useLang } from "@/lib/LanguageContext";
 import { shortenAddress } from "@/lib/config";
 import { Wallet, ChevronDown } from "lucide-react";
 
-export type Tab = "nations" | "groups" | "scorer" | "leaderboard";
+export type Tab = "nations" | "scorer" | "groups" | "leaderboard" | "activity";
 
 interface NavbarProps {
   activeTab: Tab;
@@ -39,9 +39,10 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
 
   const TABS: { id: Tab; label: string; emoji: string }[] = [
     { id: "nations",     label: t.tab_nations,     emoji: "🌍" },
-    { id: "groups",      label: t.tab_groups,      emoji: "📋" },
     { id: "scorer",      label: t.tab_scorer,      emoji: "⚽" },
+    { id: "groups",      label: t.tab_groups,      emoji: "📋" },
     { id: "leaderboard", label: t.tab_leaderboard, emoji: "🏆" },
+    { id: "activity",    label: t.tab_activity,    emoji: "📡" },
   ];
 
   return (
