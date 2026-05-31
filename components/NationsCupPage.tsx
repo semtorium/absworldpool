@@ -1,18 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, formatEth } from "@/lib/config";
+import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { CountryCard } from "./CountryCard";
 import { Loader2, Trophy } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 
+// June 11 2026 16:00 UTC — opening match kick-off
+const TOURNAMENT_START = new Date("2026-06-11T16:00:00Z").getTime();
+
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, TOURNAMENT_START - Date.now()));
+
+  useEffect(() => {
+    const tick = () => setTimeLeft(Math.max(0, TOURNAMENT_START - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (timeLeft <= 0) return null; // tournament started
+
+  const totalSecs = Math.floor(timeLeft / 1000);
+  const days  = Math.floor(totalSecs / 86400);
+  const hours = Math.floor((totalSecs % 86400) / 3600);
+  const mins  = Math.floor((totalSecs % 3600) / 60);
+  const secs  = totalSecs % 60;
+  return { days, hours, mins, secs };
+}
+
 const CONTINENTS = ["ALL", "UEFA", "CONMEBOL", "CONCACAF", "CAF", "AFC", "OFC"];
 
 export function NationsCupPage() {
   const [filter, setFilter] = useState("ALL");
+  const countdown = useCountdown();
   const { address } = useAccount();
   const { t } = useLang();
 
@@ -37,23 +61,46 @@ export function NationsCupPage() {
       return a.favoriteRank - b.favoriteRank; // fallback: odds favourite first
     });
 
-  const totalPool = allPools ? allPools.slice(1).reduce((s, p) => s + p, 0n) : 0n;
   const canClaim  = tournamentFinalized && userBalance && Number(userBalance) > 0;
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: t.nc_pool,   value: isLoading ? "…" : `${formatEth(totalPool)} ETH`, accent: true },
-          { label: t.nc_teams,  value: "48",   accent: false },
-          { label: t.nc_status, value: tournamentFinalized ? t.nc_finalized : t.nc_live, accent: false },
-        ].map(s => (
-          <div key={s.label} className="glass-card p-4 text-center">
-            <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{s.label}</p>
-            <p className={`text-xl font-black font-mono ${s.accent ? "text-gradient" : "text-white"}`}>{s.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Teams card */}
+        <div className="glass-card p-4 text-center">
+          <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_teams}</p>
+          <p className="text-xl font-black font-mono text-white">48</p>
+        </div>
+
+        {/* Countdown / Live card */}
+        <div className="glass-card p-4 text-center">
+          <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_status}</p>
+          {tournamentFinalized ? (
+            <p className="text-xl font-black text-white">{t.nc_finalized}</p>
+          ) : countdown === null ? (
+            /* tournament started */
+            <div className="flex items-center justify-center gap-1.5">
+              <div className="live-dot" />
+              <span className="text-xl font-black" style={{ color: "#00ff88" }}>LIVE</span>
+            </div>
+          ) : (
+            /* counting down */
+            <div className="flex items-center justify-center gap-1 font-mono font-black text-white">
+              {countdown.days > 0 && (
+                <><span className="text-xl">{countdown.days}</span><span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>d</span><span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span></>
+              )}
+              <span className="text-xl">{String(countdown.hours).padStart(2, "0")}</span>
+              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>h</span>
+              <span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span>
+              <span className="text-xl">{String(countdown.mins).padStart(2, "0")}</span>
+              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>m</span>
+              <span className="mx-0.5 text-sm" style={{ color: "#6b7a9a" }}>·</span>
+              <span className="text-xl">{String(countdown.secs).padStart(2, "0")}</span>
+              <span className="text-xs mb-0.5" style={{ color: "#6b7a9a" }}>s</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Claim */}
