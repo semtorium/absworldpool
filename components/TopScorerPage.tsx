@@ -122,8 +122,8 @@ export function TopScorerPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 flex-1 p-2 rounded-xl"
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex items-center gap-2 p-2 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <button
                 onClick={() => setTicketQty(q => Math.max(1, q - 1))}
@@ -146,13 +146,13 @@ export function TopScorerPage() {
                 onClick={() => buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost })}
                 disabled={isBuying || isBuyConfirming || !hasEnoughEth}
                 title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
-                className="btn-neon flex items-center gap-2 whitespace-nowrap"
+                className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
                 style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {(isBuying || isBuyConfirming) && <Loader2 size={16} className="animate-spin" />}
                 {!hasEnoughEth ? "Insufficient ETH" : `${t.ts_buy_btn} · ${formatEth(totalCost, 4)} ETH`}
               </button>
             ) : (
-              <button onClick={() => login()} className="btn-neon whitespace-nowrap">
+              <button onClick={() => login()} className="btn-neon w-full sm:w-auto flex items-center justify-center">
                 Connect Wallet
               </button>
             )}
