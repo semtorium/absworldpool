@@ -1,6 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+import { useLang } from "@/lib/LanguageContext";
+
 export function MaintenanceBanner() {
+  const { t } = useLang();
+
+  // Lock body scroll while maintenance overlay is visible
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
@@ -38,14 +49,14 @@ export function MaintenanceBanner() {
         <div className="text-5xl mb-5">🔧</div>
 
         <h2 className="text-2xl font-black text-white mb-3">
-          Site Maintenance
+          {t.maint_title}
         </h2>
 
         <p className="text-sm mb-2" style={{ color: "#6b7a9a", lineHeight: 1.7 }}>
-          We&apos;re updating tournament results and standings.
+          {t.maint_body}
         </p>
         <p className="text-sm" style={{ color: "#6b7a9a", lineHeight: 1.7 }}>
-          The site will be back shortly — your NFTs and tickets are safe.
+          {t.maint_safe}
         </p>
 
         {/* Animated dots */}

@@ -15,6 +15,7 @@ import { TermsModal }                    from "@/components/TermsModal";
 import { NationsCupWinnerModal }         from "@/components/NationsCupWinnerModal";
 import { TopScorerWinnerModal }          from "@/components/TopScorerWinnerModal";
 import { MaintenanceBanner }             from "@/components/MaintenanceBanner";
+import { EliminationSummaryModal }       from "@/components/EliminationSummaryModal";
 import { ABI }                           from "@/lib/abi";
 import { CONTRACT_ADDRESS }              from "@/lib/config";
 
@@ -27,6 +28,7 @@ export default function Home() {
   const [showTerms, setShowTerms]       = useState(false);
   const [showNcWinner, setShowNcWinner] = useState(false);
   const [showTsWinner, setShowTsWinner] = useState(false);
+  const [elimSummaryIds, setElimSummaryIds] = useState<number[]>([]);
 
   const { address } = useAccount();
 
@@ -56,7 +58,8 @@ export default function Home() {
   const { data: tsFinalized }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalized" });
   const { data: winningCountryId } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
   const { data: finalTopScorer }   = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" });
-  const { data: maintenanceMode }  = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode", query: { refetchInterval: 15_000 } });
+  const { data: maintenanceMode }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode", query: { refetchInterval: 15_000 } });
+  const { data: eliminationStatus }   = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
 
   const isDataReady = poolData !== undefined;
 
@@ -84,6 +87,24 @@ export default function Home() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appReady, ncFinalized, tsFinalized]);
+
+  // Check for newly eliminated countries since last visit
+  useEffect(() => {
+    if (!appReady || !eliminationStatus) return;
+    const currentElimIds = Array.from(eliminationStatus as unknown as boolean[])
+      .map((v, i) => (v ? i : -1))
+      .filter(i => i > 0);
+    if (currentElimIds.length === 0) return;
+
+    const stored = localStorage.getItem("abs_elim_snapshot");
+    const lastSeen: number[] = stored ? JSON.parse(stored) : [];
+    const newIds = currentElimIds.filter(id => !lastSeen.includes(id));
+
+    if (newIds.length > 0) {
+      setElimSummaryIds(newIds);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appReady, eliminationStatus]);
 
   // When NC modal closes, check if TS should follow
   const handleNcClose = useCallback(() => {
@@ -119,6 +140,18 @@ export default function Home() {
   return (
     <>
       {!!maintenanceMode && <MaintenanceBanner />}
+      {elimSummaryIds.length > 0 && !maintenanceMode && (
+        <EliminationSummaryModal
+          newlyEliminatedIds={elimSummaryIds}
+          onClose={() => {
+            const allElim = Array.from(eliminationStatus as unknown as boolean[])
+              .map((v, i) => (v ? i : -1))
+              .filter(i => i > 0);
+            localStorage.setItem("abs_elim_snapshot", JSON.stringify(allElim));
+            setElimSummaryIds([]);
+          }}
+        />
+      )}
       {showLoader && (
         <LoadingScreen isReady={isDataReady} onDone={handleLoadDone} />
       )}

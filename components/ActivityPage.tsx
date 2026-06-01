@@ -7,6 +7,7 @@ import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
+import { useLang } from "@/lib/LanguageContext";
 
 const EXPLORER_TX = "https://explorer.testnet.abs.xyz/tx/";
 const EXPLORER_ADDR = "https://explorer.testnet.abs.xyz/address/";
@@ -125,6 +126,7 @@ export function ActivityPage() {
   const client = usePublicClient();
   const { isConnected } = useAccount();
   const { login } = useLoginWithAbstract();
+  const { t } = useLang();
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
   const [loading, setLoading] = useState(true);
@@ -214,11 +216,11 @@ export function ActivityPage() {
           fontSize: 36,
         }}>📡</div>
         <div className="text-center space-y-2">
-          <p className="text-xl font-black text-white">Live Activity</p>
-          <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to see on-chain transactions</p>
+          <p className="text-xl font-black text-white">{t.act_connect_title}</p>
+          <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.act_connect_desc}</p>
         </div>
         <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">
-          Connect Wallet
+          {t.connect}
         </button>
       </div>
     );

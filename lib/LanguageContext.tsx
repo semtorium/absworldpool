@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { type Lang, type Translations, getT, LANGUAGES } from "./i18n";
+// Lang type: "en" | "tr" | "ko" | "es" | "zh" | "ar"  (pt removed, zh added)
 
 interface LangCtx {
   lang: Lang;

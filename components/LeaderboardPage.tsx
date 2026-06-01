@@ -54,10 +54,10 @@ export function LeaderboardPage() {
       <div className="flex flex-col items-center justify-center py-28 gap-6">
         <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>🏆</div>
         <div className="text-center space-y-2">
-          <p className="text-xl font-black text-white">Leaderboard</p>
-          <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to view rankings</p>
+          <p className="text-xl font-black text-white">{t.lb_connect_title}</p>
+          <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.lb_connect_desc}</p>
         </div>
-        <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">Connect Wallet</button>
+        <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">{t.connect}</button>
       </div>
     );
   }

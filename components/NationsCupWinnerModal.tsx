@@ -7,6 +7,7 @@ import { Trophy, Loader2 } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
+import { useLang } from "@/lib/LanguageContext";
 
 const CONFETTI_COLORS = [
   "#00ff88", "#7c3aed", "#fbbf24", "#ef4444",
@@ -21,6 +22,7 @@ interface Props {
 
 export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: Props) {
   const { address, isConnected } = useAccount();
+  const { t } = useLang();
 
   const winner = COUNTRIES.find(c => c.id === winningCountryId);
 
@@ -108,10 +110,8 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-3">🏆</div>
-          <h2 className="text-2xl font-black text-white">Tournament Winner!</h2>
-          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>
-            The 2026 FIFA World Cup champion has been crowned
-          </p>
+          <h2 className="text-2xl font-black text-white">{t.ncw_title}</h2>
+          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>{t.ncw_sub}</p>
         </div>
 
         {/* Winner big card */}
@@ -128,7 +128,9 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
           </div>
           <div className="flex-1">
             <p className="font-black text-white text-2xl">{winner.name}</p>
-            <p className="text-sm font-semibold mt-0.5" style={{ color: "#fbbf24" }}>🥇 World Champion · Group {winner.group}</p>
+            <p className="text-sm font-semibold mt-0.5" style={{ color: "#fbbf24" }}>
+              {t.ncw_champion} · Group {winner.group}
+            </p>
           </div>
           <Trophy size={36} style={{ color: "#fbbf24", flexShrink: 0 }} />
         </div>
@@ -137,14 +139,14 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
         {canClaim && (
           <div className="p-4 rounded-2xl mb-5"
             style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.3)" }}>
-            <p className="font-bold text-white mb-3 flex items-center gap-2">🎉 You&apos;re a winner!</p>
+            <p className="font-bold text-white mb-3">{t.ncw_you_win}</p>
             <div className="space-y-1.5 text-sm mb-4">
               <div className="flex justify-between">
-                <span style={{ color: "#6b7a9a" }}>Your NFTs</span>
+                <span style={{ color: "#6b7a9a" }}>{t.ncw_your_nfts}</span>
                 <span className="font-bold text-white">{userBal} × {winner.name}</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: "#6b7a9a" }}>Your Reward</span>
+                <span style={{ color: "#6b7a9a" }}>{t.ncw_your_reward}</span>
                 <span className="font-black font-mono" style={{ color: "#00ff88" }}>~{claimable.toFixed(5)} ETH</span>
               </div>
             </div>
@@ -163,7 +165,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
               }}
             >
               {(isPending || isConfirming) && <Loader2 size={16} className="animate-spin" />}
-              {isSuccess ? "✓ Claimed!" : isPending || isConfirming ? "Confirming…" : "Claim ETH Reward"}
+              {isSuccess ? t.ncw_claimed : (isPending || isConfirming) ? t.ncw_confirming : t.ncw_claim_btn}
             </button>
           </div>
         )}
@@ -171,23 +173,21 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
         {!isConnected && (
           <div className="p-4 rounded-2xl mb-5 text-center"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to check if you have rewards to claim.</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.ncw_connect}</p>
           </div>
         )}
 
         {isConnected && userBal === 0 && (
           <div className="p-4 rounded-2xl mb-5 text-center"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>
-              You don&apos;t hold any <span className="font-semibold text-white">{winner.name}</span> NFTs — no rewards to claim.
-            </p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.ncw_no_nfts}</p>
           </div>
         )}
 
         {/* All 48 countries grid */}
         <div className="mb-5">
           <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: "#6b7a9a" }}>
-            All Countries
+            {t.ncw_all_countries}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 6 }}>
             {COUNTRIES.map(c => {
@@ -219,7 +219,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
           className="w-full py-3 rounded-xl text-sm font-bold"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#6b7a9a", cursor: "pointer" }}
         >
-          {canClaim ? "Close (claim later)" : "Close"}
+          {canClaim ? t.ncw_close_later : t.ncw_close}
         </button>
       </div>
     </div>

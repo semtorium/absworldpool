@@ -7,6 +7,7 @@ import { Zap, Loader2 } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, TOP_SCORER_PLAYERS } from "@/lib/config";
 import { getFlagUrl } from "@/lib/countries";
+import { useLang } from "@/lib/LanguageContext";
 
 const CONFETTI_COLORS = [
   "#00ff88", "#7c3aed", "#fbbf24", "#ef4444",
@@ -21,6 +22,7 @@ interface Props {
 
 export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) {
   const { address, isConnected } = useAccount();
+  const { t } = useLang();
 
   const winner = TOP_SCORER_PLAYERS.find(p => p.name === winnerName);
 
@@ -106,10 +108,8 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-3">⚽</div>
-          <h2 className="text-2xl font-black text-white">Golden Boot Winner!</h2>
-          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>
-            The 2026 FIFA World Cup top scorer has been crowned
-          </p>
+          <h2 className="text-2xl font-black text-white">{t.tsw_title}</h2>
+          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>{t.tsw_sub}</p>
         </div>
 
         {/* Winner big card */}
@@ -129,7 +129,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
           <div className="flex-1">
             <p className="font-black text-white text-2xl">{winnerName}</p>
             <p className="text-sm font-semibold mt-0.5" style={{ color: "#a78bfa" }}>
-              {winner?.country ?? "Unknown"} · 🥇 Golden Boot
+              {winner?.country ?? "—"} · {t.tsw_golden_boot}
             </p>
           </div>
           <Zap size={36} style={{ color: "#a78bfa", flexShrink: 0 }} />
@@ -139,18 +139,18 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         {canClaim && (
           <div className="p-4 rounded-2xl mb-5"
             style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.3)" }}>
-            <p className="font-bold text-white mb-3">🎉 You voted correctly!</p>
+            <p className="font-bold text-white mb-3">{t.tsw_you_win}</p>
             <div className="space-y-1.5 text-sm mb-4">
               <div className="flex justify-between">
-                <span style={{ color: "#6b7a9a" }}>Your Votes</span>
+                <span style={{ color: "#6b7a9a" }}>{t.tsw_your_votes}</span>
                 <span className="font-bold text-white">{uVotes} ticket{uVotes > 1 ? "s" : ""}</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: "#6b7a9a" }}>Total Votes on Winner</span>
+                <span style={{ color: "#6b7a9a" }}>{t.tsw_total_votes}</span>
                 <span className="font-bold text-white">{tVotes.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: "#6b7a9a" }}>Your Reward</span>
+                <span style={{ color: "#6b7a9a" }}>{t.tsw_your_reward}</span>
                 <span className="font-black font-mono" style={{ color: "#00ff88" }}>~{claimable.toFixed(5)} ETH</span>
               </div>
             </div>
@@ -169,7 +169,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
               }}
             >
               {(isPending || isConfirming) && <Loader2 size={16} className="animate-spin" />}
-              {isSuccess ? "✓ Claimed!" : isPending || isConfirming ? "Confirming…" : "Claim ETH Reward"}
+              {isSuccess ? t.tsw_claimed : (isPending || isConfirming) ? t.tsw_confirming : t.tsw_claim_btn}
             </button>
           </div>
         )}
@@ -177,23 +177,21 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         {!isConnected && (
           <div className="p-4 rounded-2xl mb-5 text-center"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Connect your wallet to check if you have rewards to claim.</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.tsw_connect}</p>
           </div>
         )}
 
         {isConnected && uVotes === 0 && (
           <div className="p-4 rounded-2xl mb-5 text-center"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>
-              You didn&apos;t vote for <span className="font-semibold text-white">{winnerName}</span> — no rewards to claim.
-            </p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.tsw_no_votes}</p>
           </div>
         )}
 
         {/* All 50 players list */}
         <div className="mb-5">
           <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: "#6b7a9a" }}>
-            All Players
+            {t.tsw_all_players}
           </p>
           <div className="space-y-1 overflow-y-auto pr-1" style={{ maxHeight: 260 }}>
             {TOP_SCORER_PLAYERS.map(p => {
@@ -219,7 +217,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
                     {p.name}
                   </span>
                   <span className="text-xs shrink-0" style={{ color: isWin ? "#a78bfa" : "#6b7a9a" }}>
-                    {isWin ? "🥇 Winner" : p.country}
+                    {isWin ? `🥇 ${t.tsw_golden_boot}` : p.country}
                   </span>
                 </div>
               );
@@ -233,7 +231,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
           className="w-full py-3 rounded-xl text-sm font-bold"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#6b7a9a", cursor: "pointer" }}
         >
-          {canClaim ? "Close (claim later)" : "Close"}
+          {canClaim ? t.tsw_close_later : t.tsw_close}
         </button>
       </div>
     </div>

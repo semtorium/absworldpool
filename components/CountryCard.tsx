@@ -132,7 +132,7 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClos
                 className="w-full py-2 rounded-xl text-center text-xs font-black"
                 style={{ background: "rgba(255,60,60,0.1)", border: "1px solid rgba(255,60,60,0.25)", color: "#ff6060" }}
               >
-                ⛔ Eliminated
+                {t.card_eliminated}
               </div>
             </div>
           </div>
