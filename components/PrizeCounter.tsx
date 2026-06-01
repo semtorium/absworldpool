@@ -16,10 +16,10 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const isScorer   = activeTab === "scorer";
   const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups";
 
-  const { data: totalPool } = useReadContract({
+  const { data: ncPool } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
-    functionName: "totalLockedPrizePool",
+    functionName: "nationsCupPoolBalance",
     query: { refetchInterval: 5_000 },
   });
 
@@ -48,7 +48,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
 
   if (isHidden) return null;
 
-  const pool     = isScorer ? (tsPool ?? 0n) : (totalPool ?? 0n);
+  const pool     = isScorer ? (tsPool ?? 0n) : (ncPool ?? 0n);
   const ethValue = Number(pool) / 1e18;
   const eth      = ethValue.toFixed(4);
   const [int, dec] = eth.split(".");
