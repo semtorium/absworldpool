@@ -131,7 +131,7 @@ export function NationsCupPage() {
           ) : (
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#00ff88" }}>
-                LIVE IN
+                TOURNAMENT STARTS IN
               </p>
               <div className="flex items-baseline justify-center gap-0.5 font-mono font-black text-white">
                 {countdown.lastHour ? (
@@ -190,14 +190,17 @@ export function NationsCupPage() {
       {!tournamentFinalized && (
         <div
           style={{
-            borderRadius: "12px",
+            borderRadius: "14px",
             border: mintDeadline.expired
-              ? "1px solid rgba(239,68,68,0.35)"
-              : "1px solid rgba(251,191,36,0.25)",
+              ? "1px solid rgba(239,68,68,0.45)"
+              : "1px solid rgba(251,191,36,0.45)",
             background: mintDeadline.expired
-              ? "rgba(239,68,68,0.06)"
-              : "rgba(251,191,36,0.05)",
-            padding: "10px 16px",
+              ? "rgba(239,68,68,0.07)"
+              : "linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 100%)",
+            boxShadow: mintDeadline.expired
+              ? "0 0 24px rgba(239,68,68,0.10), inset 0 1px 0 rgba(255,255,255,0.04)"
+              : "0 0 28px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
+            padding: "14px 20px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -205,50 +208,63 @@ export function NationsCupPage() {
             flexWrap: "wrap",
           }}
         >
-          {/* Left label */}
-          <div className="flex items-center gap-2">
-            {mintDeadline.expired ? (
-              <>
-                <span style={{ fontSize: "15px" }}>🔒</span>
-                <span className="font-black tracking-widest uppercase text-xs" style={{ color: "#ef4444" }}>
-                  MINT CLOSED
-                </span>
-                <span className="text-xs" style={{ color: "rgba(239,68,68,0.6)" }}>
-                  · Group stage ended · Trade on OpenSea
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="live-dot" style={{ width: 6, height: 6, minWidth: 6, background: "#fbbf24", boxShadow: "0 0 6px #fbbf24" }} />
-                <span className="font-black tracking-widest uppercase text-xs" style={{ color: "#fbbf24" }}>
-                  MINT NFT UNTIL
-                </span>
-                <span className="text-xs font-semibold" style={{ color: "rgba(251,191,36,0.55)" }}>
-                  · Group Stage Ends
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Right: countdown or closed badge */}
-          {!mintDeadline.expired && (
-            <div className="flex items-center gap-1 font-mono font-black" style={{ color: "#fff" }}>
-              {mintDeadline.days > 0 && (
-                <>
-                  <span style={{ fontSize: "15px" }}>{mintDeadline.days}</span>
-                  <span style={{ fontSize: "11px", color: "#6b7a9a" }}>d</span>
-                  <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
-                </>
-              )}
-              <span style={{ fontSize: "15px" }}>{String(mintDeadline.hours).padStart(2, "0")}</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>h</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
-              <span style={{ fontSize: "15px" }}>{String(mintDeadline.mins).padStart(2, "0")}</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>m</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
-              <span style={{ fontSize: "15px" }}>{String(mintDeadline.secs).padStart(2, "0")}</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>s</span>
+          {mintDeadline.expired ? (
+            /* ── CLOSED state ── */
+            <div className="flex items-center gap-2 flex-wrap">
+              <span style={{ fontSize: "16px" }}>🔒</span>
+              <span className="font-black tracking-widest uppercase text-sm" style={{ color: "#ef4444" }}>
+                MINT CLOSED
+              </span>
+              <span className="text-xs font-semibold" style={{ color: "rgba(239,68,68,0.55)" }}>
+                · Group stage ended · NFTs tradeable on OpenSea
+              </span>
             </div>
+          ) : (
+            /* ── LIVE countdown state ── */
+            <>
+              {/* Left */}
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
+                  <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
+                    🔥 LAST CHANCE TO MINT
+                  </span>
+                </div>
+                <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
+                  Minting closes when group stage ends · After that — OpenSea only
+                </span>
+              </div>
+
+              {/* Right: ticking countdown pill */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  background: "rgba(251,191,36,0.08)",
+                  border: "1px solid rgba(251,191,36,0.2)",
+                  borderRadius: "10px",
+                  padding: "6px 14px",
+                  flexShrink: 0,
+                }}
+              >
+                {mintDeadline.days > 0 && (
+                  <>
+                    <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{mintDeadline.days}</span>
+                    <span style={{ fontSize: "11px", color: "#6b7a9a" }}>d</span>
+                    <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
+                  </>
+                )}
+                <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.hours).padStart(2, "0")}</span>
+                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>h</span>
+                <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
+                <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.mins).padStart(2, "0")}</span>
+                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>m</span>
+                <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
+                <span className="font-black font-mono" style={{ fontSize: "17px", color: "#fbbf24" }}>{String(mintDeadline.secs).padStart(2, "0")}</span>
+                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>s</span>
+              </div>
+            </>
           )}
         </div>
       )}
