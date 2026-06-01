@@ -15,9 +15,12 @@ interface CountryCardProps {
   poolWei: bigint;
   isWinner?: boolean;
   isEliminated?: boolean;
+  /** True after group stage ends — minting closed, OpenSea trade shown for surviving teams */
+  mintClosed?: boolean;
+  openSeaUrl?: string;
 }
 
-export function CountryCard({ country, poolWei, isWinner, isEliminated }: CountryCardProps) {
+export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClosed, openSeaUrl }: CountryCardProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
   const [amount, setAmount]     = useState(1);
@@ -116,8 +119,47 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
           </p>
         )}
 
-        {/* Mint controls — hover only. Hidden after tournament ends (winner or eliminated). */}
-        {!isEliminated && !isWinner && (
+        {/* ── Hover action area — 3 states ── */}
+
+        {/* State 1: Eliminated — show badge */}
+        {isEliminated && (
+          <div
+            className="overflow-hidden transition-all duration-200"
+            style={{ maxHeight: hovered ? "48px" : "0px", opacity: hovered ? 1 : 0 }}
+          >
+            <div className="pt-2">
+              <div
+                className="w-full py-2 rounded-xl text-center text-xs font-black"
+                style={{ background: "rgba(255,60,60,0.1)", border: "1px solid rgba(255,60,60,0.25)", color: "#ff6060" }}
+              >
+                ⛔ Eliminated
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* State 2: Mint closed but still alive — Trade on OpenSea */}
+        {!isEliminated && !isWinner && mintClosed && (
+          <div
+            className="overflow-hidden transition-all duration-200"
+            style={{ maxHeight: hovered ? "48px" : "0px", opacity: hovered ? 1 : 0 }}
+          >
+            <div className="pt-2">
+              <a
+                href={openSeaUrl ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 rounded-xl text-center text-xs font-black flex items-center justify-center gap-1.5"
+                style={{ background: "rgba(32,129,226,0.12)", border: "1px solid rgba(32,129,226,0.35)", color: "#4fa3f7", textDecoration: "none" }}
+              >
+                🌊 Trade on OpenSea
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* State 3: Mint open — full mint UI */}
+        {!isEliminated && !isWinner && !mintClosed && (
           <div className="overflow-hidden transition-all duration-200"
             style={{ maxHeight: hovered ? "120px" : "0px", opacity: hovered ? 1 : 0 }}>
             <div className="pt-2 space-y-2">

@@ -3,6 +3,7 @@ export const ABI = [
   { type: "function", name: "owner",                 inputs: [], outputs: [{ type: "address" }],  stateMutability: "view" },
   { type: "function", name: "devWallet",             inputs: [], outputs: [{ type: "address" }],  stateMutability: "view" },
   { type: "function", name: "paused",                inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
+  { type: "function", name: "maintenanceMode",       inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "MINT_PRICE",            inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "TICKET_PRICE",          inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "totalLockedPrizePool",  inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
@@ -22,6 +23,11 @@ export const ABI = [
     type: "function", name: "getAllCountryPools",
     inputs: [], outputs: [{ name: "pools", type: "uint256[49]" }], stateMutability: "view",
   },
+  {
+    type: "function", name: "getAllEliminationStatus",
+    inputs: [], outputs: [{ name: "eliminated", type: "bool[49]" }], stateMutability: "view",
+  },
+  { type: "function", name: "countryEliminated", inputs: [{ name: "countryId", type: "uint256" }], outputs: [{ type: "bool" }], stateMutability: "view" },
   { type: "function", name: "countryTotalSupply", inputs: [{ name: "", type: "uint256" }],                          outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "userMintCount",      inputs: [{ type: "address" }, { type: "uint256" }],               outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "userUnusedTickets",  inputs: [{ type: "address" }],                                    outputs: [{ type: "uint256" }], stateMutability: "view" },
@@ -42,6 +48,15 @@ export const ABI = [
   { type: "function", name: "refundUnusedTickets",    inputs: [], outputs: [], stateMutability: "nonpayable" },
   // ── Write: onlyOwner ─────────────────────────────────────────
   { type: "function", name: "setPaused",             inputs: [{ name: "_paused", type: "bool" }],                   outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "setMaintenanceMode",   inputs: [{ name: "_maintenance", type: "bool" }],               outputs: [], stateMutability: "nonpayable" },
+  {
+    type: "function", name: "eliminateAndRolloverBatch",
+    inputs: [
+      { name: "loserIds",  type: "uint256[]" },
+      { name: "winnerIds", type: "uint256[]" },
+    ],
+    outputs: [], stateMutability: "nonpayable",
+  },
   { type: "function", name: "setDevWallet",          inputs: [{ name: "_newDevWallet", type: "address" }],          outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setBaseURI",            inputs: [{ name: "_newBaseURI", type: "string" }],             outputs: [], stateMutability: "nonpayable" },
   {
@@ -66,6 +81,8 @@ export const ABI = [
   { type: "event", name: "NationsCupClaimed",    inputs: [{ name: "user", type: "address", indexed: true }, { name: "reward", type: "uint256" }, { name: "timestamp", type: "uint256" }] },
   { type: "event", name: "TopScorerClaimed",     inputs: [{ name: "user", type: "address", indexed: true }, { name: "reward", type: "uint256" }, { name: "timestamp", type: "uint256" }] },
   { type: "event", name: "UnusedTicketsRefunded",inputs: [{ name: "user", type: "address", indexed: true }, { name: "ticketCount", type: "uint256" }, { name: "refundAmount", type: "uint256" }, { name: "timestamp", type: "uint256" }] },
+  { type: "event", name: "MaintenanceModeChanged", inputs: [{ name: "maintenance", type: "bool" }] },
+  { type: "event", name: "CountryEliminatedEvent", inputs: [{ name: "countryId", type: "uint256", indexed: true }, { name: "poolRecipientId", type: "uint256", indexed: true }, { name: "transferredAmount", type: "uint256" }] },
   { type: "event", name: "PoolRolledOver",       inputs: [{ name: "loserId", type: "uint256", indexed: true }, { name: "winnerId", type: "uint256", indexed: true }, { name: "transferredAmount", type: "uint256" }] },
   { type: "event", name: "NationsCupFinalized",  inputs: [{ name: "winningId", type: "uint256", indexed: true }, { name: "totalPoolSize", type: "uint256" }] },
   { type: "event", name: "TopScorerFinalizedEvent", inputs: [{ name: "playerName", type: "string" }, { name: "totalPoolSize", type: "uint256" }] },

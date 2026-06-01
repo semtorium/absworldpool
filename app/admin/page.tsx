@@ -75,7 +75,13 @@ export default function AdminPage() {
   const [winningId,      setWinningId]      = useState<bigint>(0n);
   const [finalScorer,    setFinalScorer]    = useState("");
   const [isPaused,       setIsPaused]       = useState(false);
+  const [isMaintenance,  setIsMaintenance]  = useState(false);
+  const [elimStatus,     setElimStatus]     = useState<boolean[]>([]);
   const [loading,        setLoading]        = useState(false);
+
+  // Elimination state
+  const [elimLoserIds,  setElimLoserIds]  = useState<number[]>([]);   // selected losers
+  const [elimWinnerMap, setElimWinnerMap] = useState<Record<number, number>>({});  // loserId → winnerId
 
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
@@ -91,7 +97,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, sp, tv, ap, ncF, tsF, wId, fs, owner, paused] = await Promise.all([
+      const [tp, sp, tv, ap, ncF, tsF, wId, fs, owner, paused, maint, elim] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalGlobalVolumeETH" }),
@@ -102,6 +108,8 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "owner" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus" }),
       ]);
 
       setTotalPool(tp as bigint);
@@ -114,6 +122,8 @@ export default function AdminPage() {
       setFinalScorer(fs as string);
       setOwnerAddress((owner as string).toLowerCase() as Address);
       setIsPaused(paused as boolean);
+      setIsMaintenance(maint as boolean);
+      setElimStatus(Array.from(elim as unknown as boolean[]));
 
       // Fetch supplies for active countries
       const supplies = await Promise.all(
@@ -342,6 +352,8 @@ export default function AdminPage() {
           <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#00ff88" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
           <Stat label="Top Scorer"        value={tsFinalized ? "✓ Finalized" : "Active"} color={tsFinalized ? "#00ff88" : "#fbbf24"} sub={tsFinalized ? finalScorer : undefined} />
           <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#00ff88"} />
+          <Stat label="Site Maintenance"  value={isMaintenance ? "🔧 ON" : "✓ OFF"} color={isMaintenance ? "#fbbf24" : "#00ff88"} />
+          <Stat label="Eliminated"        value={`${elimStatus.filter(Boolean).length} / 48`} color="#6b7a9a" />
         </div>
 
         {/* Active Countries */}
@@ -526,12 +538,161 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Batch Elimination */}
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(239,68,68,0.2)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⛔ Eliminate Countries</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+            Mark countries as eliminated and roll their pools to the winner.<br />
+            Group stage: add 16 losers, assign each a pool recipient (group 1st place).<br />
+            Knockout: add 1 loser + the team that beat them.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Existing pairs */}
+            {elimLoserIds.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
+                <p style={{ color: "#6b7a9a", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  Selected ({elimLoserIds.length})
+                </p>
+                {elimLoserIds.map(loserId => {
+                  const loser = COUNTRIES.find(c => c.id === loserId);
+                  return (
+                    <div key={loserId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, flexWrap: "wrap" }}>
+                      <span style={{ color: "#ff6060", fontWeight: 700, fontSize: 13, flex: 1, minWidth: 120 }}>
+                        ⛔ {loser?.name ?? `#${loserId}`}
+                      </span>
+                      <span style={{ color: "#6b7a9a", fontSize: 13 }}>→ pool to</span>
+                      <select
+                        value={elimWinnerMap[loserId] ?? ""}
+                        onChange={e => setElimWinnerMap(prev => ({ ...prev, [loserId]: Number(e.target.value) }))}
+                        style={{ ...inputStyle, width: "auto", minWidth: 160, colorScheme: "dark" }}
+                      >
+                        <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select winner —</option>
+                        {COUNTRIES
+                          .filter(c => !elimLoserIds.includes(c.id) || c.id === (elimWinnerMap[loserId] ?? -1))
+                          .map(c => (
+                            <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>
+                              {c.name} (#{c.id})
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          setElimLoserIds(prev => prev.filter(id => id !== loserId));
+                          setElimWinnerMap(prev => { const n = { ...prev }; delete n[loserId]; return n; });
+                        }}
+                        style={{ background: "transparent", border: "none", color: "#6b7a9a", cursor: "pointer", fontSize: 18, padding: "0 4px", lineHeight: 1 }}
+                      >✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add new loser */}
+            {!ncFinalized && (
+              <select
+                onChange={e => {
+                  const id = Number(e.target.value);
+                  if (id && !elimLoserIds.includes(id)) setElimLoserIds(prev => [...prev, id]);
+                  e.target.value = "";
+                }}
+                style={{ ...inputStyle, maxWidth: 280, colorScheme: "dark" }}
+                defaultValue=""
+              >
+                <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>+ Add eliminated country…</option>
+                {COUNTRIES
+                  .filter(c => !elimStatus[c.id] && !elimLoserIds.includes(c.id))
+                  .map(c => (
+                    <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>
+                      {c.name} (#{c.id}){(allPools[c.id] ?? 0n) > 0n ? ` — ${(Number(allPools[c.id])/1e18).toFixed(4)} ETH` : ""}
+                    </option>
+                  ))}
+              </select>
+            )}
+
+            {/* Execute */}
+            {elimLoserIds.length > 0 && (() => {
+              const allAssigned = elimLoserIds.every(id => !!elimWinnerMap[id]);
+              const ready = allAssigned && elimLoserIds.length > 0;
+              return (
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+                  <button
+                    disabled={!ready || txPending === "eliminate"}
+                    onClick={() => {
+                      const winners = elimLoserIds.map(id => elimWinnerMap[id]);
+                      sendTx("eliminateAndRolloverBatch", [elimLoserIds.map(BigInt), winners.map(BigInt)], "eliminate")
+                        .then(() => { setElimLoserIds([]); setElimWinnerMap({}); });
+                    }}
+                    style={{
+                      background: ready ? "linear-gradient(135deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.05)",
+                      color: ready ? "#fff" : "#4a5568",
+                      border: "none", borderRadius: 12, padding: "10px 20px",
+                      fontWeight: 800, fontSize: 13, cursor: ready ? "pointer" : "not-allowed",
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}
+                  >
+                    {txPending === "eliminate" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                    {txPending === "eliminate" ? "Confirming…" : `Eliminate ${elimLoserIds.length} ${elimLoserIds.length === 1 ? "Country" : "Countries"}`}
+                  </button>
+                  {!allAssigned && <p style={{ color: "#fbbf24", fontSize: 12 }}>⚠️ Assign a winner for each row</p>}
+                  <button
+                    onClick={() => { setElimLoserIds([]); setElimWinnerMap({}); }}
+                    style={{ background: "transparent", border: "none", color: "#6b7a9a", fontSize: 12, cursor: "pointer" }}
+                  >Clear all</button>
+                </div>
+              );
+            })()}
+
+            {/* Already eliminated */}
+            {elimStatus.filter(Boolean).length > 0 && (
+              <div style={{ marginTop: 4, padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ color: "#6b7a9a", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+                  Already Eliminated ({elimStatus.filter(Boolean).length})
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {COUNTRIES.filter(c => elimStatus[c.id]).map(c => (
+                    <span key={c.id} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "3px 10px", color: "#ff6060", fontSize: 12, fontWeight: 700 }}>
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Contract Config */}
         <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚙️ Contract Config</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Emergency controls and parameter adjustments.</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {/* Maintenance Mode */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "16px 20px", borderRadius: 14, background: isMaintenance ? "rgba(251,191,36,0.07)" : "rgba(255,255,255,0.02)", border: `1px solid ${isMaintenance ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.08)"}` }}>
+              <div>
+                <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>
+                  {isMaintenance ? "🔧 Maintenance Mode ON" : "✓ Site Normal"}
+                </p>
+                <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
+                  {isMaintenance ? "All visitors see the maintenance overlay." : "Site is visible to everyone normally."}
+                </p>
+              </div>
+              <button
+                disabled={txPending === "maintenance"}
+                onClick={() => sendTx("setMaintenanceMode", [!isMaintenance], "maintenance")}
+                style={{
+                  background: isMaintenance ? "linear-gradient(135deg,#00ff88,#00cc6a)" : "linear-gradient(135deg,#fbbf24,#f59e0b)",
+                  color: "#050810",
+                  border: "none", borderRadius: 12, padding: "10px 20px",
+                  fontWeight: 800, fontSize: 13, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+                }}>
+                {txPending === "maintenance" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {txPending === "maintenance" ? "Confirming…" : isMaintenance ? "Turn Off Maintenance" : "Enter Maintenance"}
+              </button>
+            </div>
 
             {/* Pause / Unpause */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "16px 20px", borderRadius: 14, background: isPaused ? "rgba(239,68,68,0.07)" : "rgba(255,255,255,0.02)", border: `1px solid ${isPaused ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}` }}>

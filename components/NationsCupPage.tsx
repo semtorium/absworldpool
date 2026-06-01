@@ -42,9 +42,14 @@ export function NationsCupPage() {
   const { address } = useAccount();
   const { t } = useLang();
 
-  const { data: allPools, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools", query: { refetchInterval: 5_000 } });
-  const { data: tournamentFinalized } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
-  const { data: winningCountryId }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
+  const { data: allPools, isLoading }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools", query: { refetchInterval: 5_000 } });
+  const { data: tournamentFinalized }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
+  const { data: winningCountryId }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
+  const { data: eliminationStatus }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
+  const { data: contractPaused }         = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" });
+
+  // Mint is "closed" when contract is paused OR tournament is finalized
+  const mintClosed = !!contractPaused || !!tournamentFinalized;
   const { data: userBalance }         = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOf",
     args: address && winningCountryId ? [address, winningCountryId] : undefined,
@@ -214,8 +219,11 @@ export function NationsCupPage() {
           {filtered.map((country) => (
             <CountryCard key={country.id} country={country}
               poolWei={allPools?.[country.id] ?? 0n}
-              isWinner={tournamentFinalized && Number(winningCountryId) === country.id}
-              isEliminated={!!tournamentFinalized && Number(winningCountryId) !== country.id} />
+              isWinner={!!tournamentFinalized && Number(winningCountryId) === country.id}
+              isEliminated={eliminationStatus?.[country.id] ?? false}
+              mintClosed={mintClosed}
+              openSeaUrl={`https://opensea.io/assets/abstract/${CONTRACT_ADDRESS}/${country.id}`}
+            />
           ))}
         </div>
       )}

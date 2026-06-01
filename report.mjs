@@ -9,7 +9,7 @@ import { createPublicClient, http, formatEther, parseAbiItem } from "viem";
 import { abstractTestnet } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0xee37Ddb34a737AD274671423Feb838C72e7999e4";
+const CONTRACT = "0xA1bdaCCb41a5bbF049cEE4Db5732E42Ca4985362";
 
 // ID mapping must match frontend/lib/countries.ts exactly
 const COUNTRIES = [

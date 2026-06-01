@@ -14,6 +14,7 @@ import { LoadingScreen }                 from "@/components/LoadingScreen";
 import { TermsModal }                    from "@/components/TermsModal";
 import { NationsCupWinnerModal }         from "@/components/NationsCupWinnerModal";
 import { TopScorerWinnerModal }          from "@/components/TopScorerWinnerModal";
+import { MaintenanceBanner }             from "@/components/MaintenanceBanner";
 import { ABI }                           from "@/lib/abi";
 import { CONTRACT_ADDRESS }              from "@/lib/config";
 
@@ -55,6 +56,7 @@ export default function Home() {
   const { data: tsFinalized }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalized" });
   const { data: winningCountryId } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
   const { data: finalTopScorer }   = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" });
+  const { data: maintenanceMode }  = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode", query: { refetchInterval: 15_000 } });
 
   const isDataReady = poolData !== undefined;
 
@@ -116,6 +118,7 @@ export default function Home() {
 
   return (
     <>
+      {!!maintenanceMode && <MaintenanceBanner />}
       {showLoader && (
         <LoadingScreen isReady={isDataReady} onDone={handleLoadDone} />
       )}
