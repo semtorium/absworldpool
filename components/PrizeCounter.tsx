@@ -82,13 +82,13 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
             background: `rgba(${accentRgb},0.08)`,
             border: `1px solid rgba(${accentRgb},0.2)`,
             borderRadius: "99px",
-            padding: "12px 42px",
+            padding: "6px 21px",
           }}
         >
-          <div className="live-dot" style={{ width: 10, height: 10, minWidth: 10 }} />
+          <div className="live-dot" style={{ width: 7, height: 7, minWidth: 7 }} />
           <span
             className="font-black tracking-[0.25em] uppercase"
-            style={{ color: accent, fontSize: "30px" }}
+            style={{ color: accent, fontSize: "15px" }}
           >
             {label}
           </span>

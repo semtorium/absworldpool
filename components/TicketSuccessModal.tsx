@@ -39,9 +39,14 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
   []);
 
   useEffect(() => {
+    // Lock body scroll
+    document.body.style.overflow = "hidden";
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handler);
+    };
   }, [onClose]);
 
   return (
@@ -139,10 +144,10 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
                     #{i + 1}
                   </span>
                   <Image
-                    src={getFlagUrl(p.flag, 48)}
+                    src={getFlagUrl(p.flag, 80)}
                     alt={p.country}
-                    width={18}
-                    height={13}
+                    width={20}
+                    height={15}
                     className="rounded shrink-0 object-cover"
                     unoptimized
                   />

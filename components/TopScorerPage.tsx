@@ -310,8 +310,8 @@ export function TopScorerPage() {
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
                     <Image
-                      src={getFlagUrl(p.flag, 48)} alt={p.country}
-                      width={18} height={13}
+                      src={getFlagUrl(p.flag, 80)} alt={p.country}
+                      width={20} height={15}
                       className="rounded shrink-0 object-cover" unoptimized
                     />
                     <div className="min-w-0 flex-1">
