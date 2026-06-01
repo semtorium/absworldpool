@@ -67,14 +67,14 @@ export function LoadingScreen({ onDone, isReady }: Props) {
       {/* Pulsing outer ring */}
       <div style={{
         position: "absolute",
-        width: 320, height: 320,
+        width: 640, height: 640,
         borderRadius: "50%",
         border: "1px solid rgba(0,255,136,0.06)",
         animation: "loadRing1 3s ease-in-out infinite",
       }} />
       <div style={{
         position: "absolute",
-        width: 220, height: 220,
+        width: 440, height: 440,
         borderRadius: "50%",
         border: "1px solid rgba(251,191,36,0.07)",
         animation: "loadRing2 3s ease-in-out infinite 0.4s",
@@ -87,43 +87,43 @@ export function LoadingScreen({ onDone, isReady }: Props) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 64, height: 64,
-          borderRadius: "18px",
+          width: 128, height: 128,
+          borderRadius: "36px",
           background: "rgba(251,191,36,0.08)",
           border: "1px solid rgba(251,191,36,0.18)",
-          marginBottom: 20,
-          boxShadow: "0 0 40px rgba(251,191,36,0.1)",
+          marginBottom: 40,
+          boxShadow: "0 0 80px rgba(251,191,36,0.1)",
           animation: "loadLogoPulse 2.5s ease-in-out infinite",
         }}>
-          <span style={{ fontSize: 28 }}>🏆</span>
+          <span style={{ fontSize: 56 }}>🏆</span>
         </div>
 
         {/* Brand name */}
         <p style={{
-          fontSize: 13,
+          fontSize: 26,
           fontWeight: 900,
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           color: "#fbbf24",
-          marginBottom: 4,
+          marginBottom: 8,
         }}>
           ABS WorldPool
         </p>
         <p style={{
-          fontSize: 11,
+          fontSize: 22,
           fontWeight: 600,
           letterSpacing: "0.15em",
           color: "rgba(107,122,154,0.7)",
           textTransform: "uppercase",
-          marginBottom: 28,
+          marginBottom: 56,
         }}>
           2026 World Cup
         </p>
 
         {/* Progress bar */}
         <div style={{
-          width: 160,
-          height: 2,
+          width: 320,
+          height: 4,
           background: "rgba(255,255,255,0.06)",
           borderRadius: 99,
           overflow: "hidden",
@@ -134,7 +134,7 @@ export function LoadingScreen({ onDone, isReady }: Props) {
             background: "linear-gradient(90deg, #00ff88, #7c3aed)",
             borderRadius: 99,
             animation: `loadBar ${MIN_MS / 1000 + 0.3}s cubic-bezier(0.4,0,0.6,1) forwards`,
-            boxShadow: "0 0 8px rgba(0,255,136,0.6)",
+            boxShadow: "0 0 16px rgba(0,255,136,0.6)",
           }} />
         </div>
       </div>
