@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Ticket, Trophy, Zap } from "lucide-react";
+import { Loader2, Ticket, Trophy, Zap, Search } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, TICKET_PRICE, TOP_SCORER_PLAYERS, formatEth } from "@/lib/config";
 import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
+import { TicketSuccessModal } from "@/components/TicketSuccessModal";
 
 export function TopScorerPage() {
   const { address, isConnected } = useAccount();
@@ -19,6 +20,17 @@ export function TopScorerPage() {
 
   const [ticketQty, setTicketQty]     = useState(1);
   const [voteAmounts, setVoteAmounts] = useState<Record<string, number>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightPlayer, setHighlightPlayer] = useState<string | null>(null);
+  const [flashList, setFlashList]     = useState(false);
+  const [modalData, setModalData]     = useState<{ tickets: number; unused: number } | null>(null);
+
+  // Refs
+  const purchasedQtyRef = useRef(1);
+  const playerListRef   = useRef<HTMLDivElement>(null);
+  const playerRowRefs   = useRef<Map<string, HTMLDivElement>>(new Map());
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: ticketBalance, refetch: refetchTickets } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
@@ -48,13 +60,23 @@ export function TopScorerPage() {
   const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
   const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
-  // Immediately refetch after any successful tx
+  // Show modal + refetch after buy
   useEffect(() => {
-    if (isBuySuccess || isVoteSuccess) {
+    if (isBuySuccess) {
+      const bought = purchasedQtyRef.current;
+      setModalData({ tickets: bought, unused: Number(ticketBalance ?? 0n) + bought });
       refetchTickets();
       queryClient.invalidateQueries();
     }
-  }, [isBuySuccess, isVoteSuccess, refetchTickets, queryClient]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBuySuccess]);
+
+  useEffect(() => {
+    if (isVoteSuccess) {
+      refetchTickets();
+      queryClient.invalidateQueries();
+    }
+  }, [isVoteSuccess, refetchTickets, queryClient]);
 
   const { data: ethBalance } = useBalance({ address, query: { refetchInterval: 5_000 } });
 
@@ -67,11 +89,48 @@ export function TopScorerPage() {
     .sort((a, b) => b.votes - a.votes);
 
   const maxVotes = Math.max(...playersWithVotes.map(p => p.votes), 1);
+  const top5     = playersWithVotes.slice(0, 5);
+
+  // Search dropdown matches
+  const searchMatches = searchQuery.trim()
+    ? playersWithVotes.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.country.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 6)
+    : [];
+
+  const handleSelectPlayer = (name: string) => {
+    setHighlightPlayer(name);
+    setSearchQuery("");
+    setShowDropdown(false);
+    const el = playerRowRefs.current.get(name);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const num = parseInt(e.target.value, 10);
     if (!isNaN(num) && num >= 1) setTicketQty(num);
     else if (e.target.value === "") setTicketQty(1);
+  };
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Vote Now: scroll to player list + flash
+  const handleVoteNow = () => {
+    setTimeout(() => {
+      playerListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setFlashList(true);
+      setTimeout(() => setFlashList(false), 2200);
+    }, 80);
   };
 
   return (
@@ -143,7 +202,10 @@ export function TopScorerPage() {
 
             {isConnected ? (
               <button
-                onClick={() => buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost })}
+                onClick={() => {
+                  purchasedQtyRef.current = ticketQty;
+                  buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost });
+                }}
                 disabled={isBuying || isBuyConfirming || !hasEnoughEth}
                 title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
                 className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
@@ -157,12 +219,6 @@ export function TopScorerPage() {
               </button>
             )}
           </div>
-
-          {isBuySuccess && (
-            <p className="text-sm font-bold" style={{ color: "#00ff88" }}>
-              ✓ {ticketQty} {t.ts_bought}
-            </p>
-          )}
         </div>
       )}
 
@@ -176,7 +232,6 @@ export function TopScorerPage() {
             color: "#fbbf24",
             animation: "ticketAlertPulse 2.5s ease-in-out infinite",
           }}>
-          {/* Sonar ping dot */}
           <span className="relative flex h-3 w-3 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
               style={{ background: "#fbbf24" }} />
@@ -190,10 +245,85 @@ export function TopScorerPage() {
       )}
 
       {/* Vote list */}
-      <div className="glass-card p-5 space-y-3">
-        <h2 className="font-black text-white text-lg flex items-center gap-2">
-          <Zap size={20} style={{ color: "#8b5cf6" }} /> {t.ts_vote_title}
-        </h2>
+      <div
+        ref={playerListRef}
+        className="glass-card p-5 space-y-3 transition-all duration-300"
+        style={flashList ? {
+          borderColor: "rgba(0,255,136,0.55)",
+          boxShadow: "0 0 32px rgba(0,255,136,0.25), 0 0 8px rgba(139,92,246,0.2)",
+          animation: "listFlash 0.55s ease-in-out 4",
+        } : undefined}
+      >
+        {/* Header with search */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="font-black text-white text-lg flex items-center gap-2 shrink-0">
+            <Zap size={20} style={{ color: "#8b5cf6" }} /> {t.ts_vote_title}
+          </h2>
+          {/* Search input with dropdown */}
+          <div ref={searchContainerRef} className="relative ml-auto">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: `1px solid ${showDropdown && searchMatches.length > 0 ? "rgba(139,92,246,0.4)" : "rgba(255,255,255,0.09)"}`,
+                width: "180px",
+              }}
+            >
+              <Search size={13} style={{ color: "#6b7a9a", flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search player…"
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setShowDropdown(true); }}
+                onFocus={() => setShowDropdown(true)}
+                className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-[#3d4a63] min-w-0"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setShowDropdown(false); setHighlightPlayer(null); }}
+                  className="text-xs font-bold shrink-0"
+                  style={{ color: "#6b7a9a" }}
+                >✕</button>
+              )}
+            </div>
+
+            {/* Dropdown */}
+            {showDropdown && searchMatches.length > 0 && (
+              <div
+                className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden"
+                style={{
+                  width: "220px",
+                  background: "#0d1120",
+                  border: "1px solid rgba(139,92,246,0.35)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                }}
+              >
+                {searchMatches.map((p, i) => (
+                  <button
+                    key={p.name}
+                    onClick={() => handleSelectPlayer(p.name)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors"
+                    style={{
+                      borderBottom: i < searchMatches.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(139,92,246,0.12)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <Image
+                      src={getFlagUrl(p.flag, 48)} alt={p.country}
+                      width={18} height={13}
+                      className="rounded shrink-0 object-cover" unoptimized
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white truncate">{p.name}</p>
+                      <p className="text-xs truncate" style={{ color: "#6b7a9a" }}>{p.country}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="space-y-2">
           {playersWithVotes.map((player) => {
@@ -201,17 +331,33 @@ export function TopScorerPage() {
             const myVote   = voteAmounts[player.name] ?? 1;
             const canVote  = unusedTickets > 0 && !topScorerFinalized && isConnected;
             const isWinner = topScorerFinalized && finalTopScorer === player.name;
+            const isHighlighted = highlightPlayer === player.name;
 
             return (
-              <div key={player.name}
-                className="p-3 rounded-xl space-y-2"
+              <div
+                key={player.name}
+                ref={el => {
+                  if (el) playerRowRefs.current.set(player.name, el);
+                  else playerRowRefs.current.delete(player.name);
+                }}
+                className="p-3 rounded-xl space-y-2 transition-all duration-300"
                 style={{
-                  background: isWinner ? "rgba(251,191,36,0.06)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${isWinner ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.05)"}`,
+                  background: isHighlighted
+                    ? "rgba(139,92,246,0.1)"
+                    : isWinner
+                      ? "rgba(251,191,36,0.06)"
+                      : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${
+                    isHighlighted
+                      ? "rgba(139,92,246,0.55)"
+                      : isWinner
+                        ? "rgba(251,191,36,0.3)"
+                        : "rgba(255,255,255,0.05)"
+                  }`,
+                  boxShadow: isHighlighted ? "0 0 16px rgba(139,92,246,0.25)" : undefined,
                 }}>
 
                 <div className="flex items-center gap-3">
-                  {/* Small flag */}
                   <Image
                     src={getFlagUrl(player.flag, 80)} alt={player.country}
                     width={28} height={19}
@@ -268,6 +414,25 @@ export function TopScorerPage() {
           })}
         </div>
       </div>
+
+      {/* Ticket Success Modal */}
+      {modalData && (
+        <TicketSuccessModal
+          ticketsBought={modalData.tickets}
+          unusedTotal={modalData.unused}
+          top5={top5}
+          onClose={() => setModalData(null)}
+          onVoteNow={handleVoteNow}
+        />
+      )}
+
+      <style>{`
+        @keyframes listFlash {
+          0%,100% { border-color: rgba(255,255,255,0.07); box-shadow: none; }
+          25%      { border-color: rgba(0,255,136,0.55);  box-shadow: 0 0 28px rgba(0,255,136,0.22); }
+          75%      { border-color: rgba(139,92,246,0.55); box-shadow: 0 0 28px rgba(139,92,246,0.22); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -58,7 +58,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const accentRgb = isScorer ? "139,92,246" : "251,191,36";
   const label     = isScorer ? t.ts_pool : t.prize_label;
   const subtitle  = isScorer
-    ? "Grows with every ticket · Correct voters share 95% of the pool"
+    ? "Grows with every ticket"
     : "Grows with every mint · Claim when your nation wins";
 
   return (
@@ -75,13 +75,23 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
 
       {/* Content */}
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Live label */}
+        {/* Label */}
         <div
-          className="inline-flex items-center gap-2 mb-4"
-          style={{ background: `rgba(${accentRgb},0.08)`, border: `1px solid rgba(${accentRgb},0.2)`, borderRadius: "99px", padding: "4px 14px" }}
+          className="inline-flex items-center gap-3 mb-6"
+          style={{
+            background: `rgba(${accentRgb},0.08)`,
+            border: `1px solid rgba(${accentRgb},0.2)`,
+            borderRadius: "99px",
+            padding: "12px 42px",
+          }}
         >
-          <div className="live-dot" />
-          <span className="text-[10px] font-black tracking-[0.25em] uppercase" style={{ color: accent }}>{label}</span>
+          <div className="live-dot" style={{ width: 10, height: 10, minWidth: 10 }} />
+          <span
+            className="font-black tracking-[0.25em] uppercase"
+            style={{ color: accent, fontSize: "30px" }}
+          >
+            {label}
+          </span>
         </div>
 
         {/* Big number */}
