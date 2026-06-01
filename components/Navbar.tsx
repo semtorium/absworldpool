@@ -44,7 +44,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
     { id: "groups",      label: t.tab_groups,      emoji: "📋" },
     { id: "leaderboard", label: t.tab_leaderboard, emoji: "🏆" },
     { id: "activity",    label: t.tab_activity,    emoji: "📡" },
-    { id: "faq",         label: t.tab_faq,         emoji: "❓" },
+    // { id: "faq",         label: t.tab_faq,         emoji: "❓" },
   ];
 
   return (

@@ -183,7 +183,7 @@ export default function Home() {
           {activeTab === "scorer"      && <TopScorerPage />}
           {activeTab === "leaderboard" && <LeaderboardPage />}
           {activeTab === "activity"    && <ActivityPage />}
-          {activeTab === "faq"         && <FAQPage />}
+          {/* {activeTab === "faq"         && <FAQPage />} */}
         </main>
       </div>
     </>
