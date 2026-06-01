@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useReadContract, useAccount } from "wagmi";
 import { Navbar, type Tab }              from "@/components/Navbar";
 import { NationsCupPage }                from "@/components/NationsCupPage";
@@ -28,6 +28,17 @@ export default function Home() {
   const [showTsWinner, setShowTsWinner] = useState(false);
 
   const { address } = useAccount();
+
+  // Render-time claimed checks — re-evaluates when address loads (fixes modal reappearing after claim)
+  const isNcClaimed = useMemo(() => {
+    const addr = address?.toLowerCase() ?? "";
+    return addr ? localStorage.getItem(`nc_claimed_${addr}`) === "true" : false;
+  }, [address]);
+  const isTsClaimed = useMemo(() => {
+    const addr = address?.toLowerCase() ?? "";
+    return addr ? localStorage.getItem(`ts_claimed_${addr}`) === "true" : false;
+  }, [address]);
+
   // Keep address accessible inside effects without adding it as a dependency
   const addressRef = useRef(address);
   addressRef.current = address;
@@ -111,14 +122,14 @@ export default function Home() {
       {showTerms && (
         <TermsModal onAccept={handleTermsAccept} />
       )}
-      {showNcWinner && ncFinalized && winningCountryId !== undefined && (
+      {showNcWinner && ncFinalized && winningCountryId !== undefined && !isNcClaimed && (
         <NationsCupWinnerModal
           winningCountryId={Number(winningCountryId)}
           onClose={handleNcClose}
           onClaimed={handleNcClose}
         />
       )}
-      {showTsWinner && tsFinalized && finalTopScorer && (
+      {showTsWinner && tsFinalized && finalTopScorer && !isTsClaimed && (
         <TopScorerWinnerModal
           winnerName={finalTopScorer as string}
           onClose={() => setShowTsWinner(false)}

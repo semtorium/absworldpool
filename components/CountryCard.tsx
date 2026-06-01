@@ -116,8 +116,8 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated }: Countr
           </p>
         )}
 
-        {/* Mint controls — hover only */}
-        {!isEliminated && (
+        {/* Mint controls — hover only. Hidden after tournament ends (winner or eliminated). */}
+        {!isEliminated && !isWinner && (
           <div className="overflow-hidden transition-all duration-200"
             style={{ maxHeight: hovered ? "120px" : "0px", opacity: hovered ? 1 : 0 }}>
             <div className="pt-2 space-y-2">
