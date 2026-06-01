@@ -19,6 +19,7 @@ const t = {
     tab_scorer:      "Top Scorer",
     tab_leaderboard: "Leaderboard",
     tab_activity:    "Activity",
+    tab_faq:         "FAQ",
 
     // Prize Counter
     prize_label:     "Prize Pool",
@@ -159,6 +160,7 @@ const t = {
     tab_scorer:      "Gol Kralı",
     tab_leaderboard: "Liderlik Tablosu",
     tab_activity:    "Aktivite",
+    tab_faq:         "SSS",
 
     prize_label:     "Ödül Havuzu",
 
@@ -287,6 +289,7 @@ const t = {
     tab_scorer:      "Máx. Goleador",
     tab_leaderboard: "Clasificación",
     tab_activity:    "Actividad",
+    tab_faq:         "FAQ",
 
     prize_label:     "Premio Pool",
 
@@ -415,6 +418,7 @@ const t = {
     tab_scorer:      "最佳射手",
     tab_leaderboard: "排行榜",
     tab_activity:    "活动",
+    tab_faq:         "FAQ",
 
     prize_label:     "奖金池",
 
@@ -543,6 +547,7 @@ const t = {
     tab_scorer:      "هداف البطولة",
     tab_leaderboard: "لوحة الصدارة",
     tab_activity:    "النشاط",
+    tab_faq:         "الأسئلة",
 
     prize_label:     "جائزة المجموع",
 
@@ -671,6 +676,7 @@ const t = {
     tab_scorer:      "득점왕",
     tab_leaderboard: "리더보드",
     tab_activity:    "활동",
+    tab_faq:         "FAQ",
 
     prize_label:     "프라이즈 풀",
 

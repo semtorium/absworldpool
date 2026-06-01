@@ -8,6 +8,7 @@ import { GroupsPage }                    from "@/components/GroupsPage";
 import { TopScorerPage }                 from "@/components/TopScorerPage";
 import { LeaderboardPage }               from "@/components/LeaderboardPage";
 import { ActivityPage }                  from "@/components/ActivityPage";
+import { FAQPage }                       from "@/components/FAQPage";
 import { HoldersTicker }                 from "@/components/HoldersTicker";
 import { PrizeCounter }                  from "@/components/PrizeCounter";
 import { LoadingScreen }                 from "@/components/LoadingScreen";
@@ -65,7 +66,7 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Tab | null;
-    const valid: Tab[] = ["nations", "groups", "scorer", "leaderboard"];
+    const valid: Tab[] = ["nations", "groups", "scorer", "leaderboard", "activity", "faq"];
     if (saved && valid.includes(saved)) setActiveTab(saved);
   }, []);
 
@@ -182,6 +183,7 @@ export default function Home() {
           {activeTab === "scorer"      && <TopScorerPage />}
           {activeTab === "leaderboard" && <LeaderboardPage />}
           {activeTab === "activity"    && <ActivityPage />}
+          {activeTab === "faq"         && <FAQPage />}
         </main>
       </div>
     </>

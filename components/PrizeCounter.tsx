@@ -14,7 +14,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const { t } = useLang();
   const [ethUsd, setEthUsd] = useState<number | null>(null);
   const isScorer   = activeTab === "scorer";
-  const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups";
+  const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups" || activeTab === "faq";
 
   const { data: ncPool } = useReadContract({
     address: CONTRACT_ADDRESS,
