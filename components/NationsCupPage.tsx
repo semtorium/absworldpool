@@ -12,6 +12,9 @@ import { useLang } from "@/lib/LanguageContext";
 // June 11 2026 16:00 UTC — opening match kick-off
 const TOURNAMENT_START = new Date("2026-06-11T16:00:00Z").getTime();
 
+// June 26 2026 23:59 UTC — last group stage match ends, minting closes
+const MINT_DEADLINE = new Date("2026-06-26T23:59:00Z").getTime();
+
 function useCountdown() {
   const [timeLeft, setTimeLeft] = useState(() => Math.max(0, TOURNAMENT_START - Date.now()));
 
@@ -33,12 +36,32 @@ function useCountdown() {
   return { days, hours, mins, secs, lastHour };
 }
 
+function useMintDeadlineCountdown() {
+  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, MINT_DEADLINE - Date.now()));
+
+  useEffect(() => {
+    const tick = () => setTimeLeft(Math.max(0, MINT_DEADLINE - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const expired = timeLeft <= 0;
+  const totalSecs = Math.floor(timeLeft / 1000);
+  const days  = Math.floor(totalSecs / 86400);
+  const hours = Math.floor((totalSecs % 86400) / 3600);
+  const mins  = Math.floor((totalSecs % 3600) / 60);
+  const secs  = totalSecs % 60;
+  return { expired, days, hours, mins, secs };
+}
+
 const FILTERS = ["ALL", "YOURS"] as const;
 type Filter = typeof FILTERS[number];
 
 export function NationsCupPage() {
   const [filter, setFilter] = useState<Filter>("ALL");
   const countdown = useCountdown();
+  const mintDeadline = useMintDeadlineCountdown();
   const { address } = useAccount();
   const { t } = useLang();
 
@@ -47,8 +70,8 @@ export function NationsCupPage() {
   const { data: eliminationStatus }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
   const { data: contractPaused }         = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" });
 
-  // Mint is "closed" when contract is paused OR tournament is finalized
-  const mintClosed = !!contractPaused || !!tournamentFinalized;
+  // Mint is "closed" when contract is paused OR tournament is finalized OR group stage deadline passed
+  const mintClosed = !!contractPaused || !!tournamentFinalized || mintDeadline.expired;
   const { data: userBalance }         = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOf",
     args: address && winningCountryId ? [address, winningCountryId] : undefined,
@@ -160,6 +183,73 @@ export function NationsCupPage() {
             {(isClaiming || isClaimConfirming) && <Loader2 size={16} className="animate-spin" />}
             {isClaimSuccess ? t.nc_claimed : t.nc_claim_btn}
           </button>
+        </div>
+      )}
+
+      {/* Mint deadline banner — hidden after tournament finalized */}
+      {!tournamentFinalized && (
+        <div
+          style={{
+            borderRadius: "12px",
+            border: mintDeadline.expired
+              ? "1px solid rgba(239,68,68,0.35)"
+              : "1px solid rgba(251,191,36,0.25)",
+            background: mintDeadline.expired
+              ? "rgba(239,68,68,0.06)"
+              : "rgba(251,191,36,0.05)",
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Left label */}
+          <div className="flex items-center gap-2">
+            {mintDeadline.expired ? (
+              <>
+                <span style={{ fontSize: "15px" }}>🔒</span>
+                <span className="font-black tracking-widest uppercase text-xs" style={{ color: "#ef4444" }}>
+                  MINT CLOSED
+                </span>
+                <span className="text-xs" style={{ color: "rgba(239,68,68,0.6)" }}>
+                  · Group stage ended · Trade on OpenSea
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="live-dot" style={{ width: 6, height: 6, minWidth: 6, background: "#fbbf24", boxShadow: "0 0 6px #fbbf24" }} />
+                <span className="font-black tracking-widest uppercase text-xs" style={{ color: "#fbbf24" }}>
+                  MINT NFT UNTIL
+                </span>
+                <span className="text-xs font-semibold" style={{ color: "rgba(251,191,36,0.55)" }}>
+                  · Group Stage Ends
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Right: countdown or closed badge */}
+          {!mintDeadline.expired && (
+            <div className="flex items-center gap-1 font-mono font-black" style={{ color: "#fff" }}>
+              {mintDeadline.days > 0 && (
+                <>
+                  <span style={{ fontSize: "15px" }}>{mintDeadline.days}</span>
+                  <span style={{ fontSize: "11px", color: "#6b7a9a" }}>d</span>
+                  <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
+                </>
+              )}
+              <span style={{ fontSize: "15px" }}>{String(mintDeadline.hours).padStart(2, "0")}</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>h</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
+              <span style={{ fontSize: "15px" }}>{String(mintDeadline.mins).padStart(2, "0")}</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>m</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a", margin: "0 2px" }}>·</span>
+              <span style={{ fontSize: "15px" }}>{String(mintDeadline.secs).padStart(2, "0")}</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>s</span>
+            </div>
+          )}
         </div>
       )}
 
