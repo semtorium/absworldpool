@@ -42,8 +42,7 @@ export function NationsCupPage() {
   const { address } = useAccount();
   const { t } = useLang();
 
-  const { data: allPools, isLoading }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools", query: { refetchInterval: 5_000 } });
-  const { data: tournamentFinalized }    = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
+  const { data: tournamentFinalized, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
   const { data: winningCountryId }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
   const { data: eliminationStatus }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
   const { data: contractPaused }         = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" });
@@ -82,14 +81,7 @@ export function NationsCupPage() {
     ? COUNTRIES.filter(c => ownedIds.has(c.id))
     : COUNTRIES;
 
-  const filtered = baseList
-    .slice()
-    .sort((a, b) => {
-      const pa = allPools?.[a.id] ?? 0n;
-      const pb = allPools?.[b.id] ?? 0n;
-      if (pa !== pb) return pb > pa ? 1 : -1;
-      return a.favoriteRank - b.favoriteRank;
-    });
+  const filtered = baseList.slice().sort((a, b) => a.favoriteRank - b.favoriteRank);
 
   const canClaim  = tournamentFinalized && userBalance && Number(userBalance) > 0;
 
@@ -218,7 +210,6 @@ export function NationsCupPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
           {filtered.map((country) => (
             <CountryCard key={country.id} country={country}
-              poolWei={allPools?.[country.id] ?? 0n}
               isWinner={!!tournamentFinalized && Number(winningCountryId) === country.id}
               isEliminated={eliminationStatus?.[country.id] ?? false}
               mintClosed={mintClosed}

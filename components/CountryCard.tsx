@@ -5,14 +5,13 @@ import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, MINT_PRICE, MAX_MINT_PER_WALLET, formatEth } from "@/lib/config";
+import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
 import { getFlagUrl, type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { MintSuccessModal } from "./MintSuccessModal";
 
 interface CountryCardProps {
   country: Country;
-  poolWei: bigint;
   isWinner?: boolean;
   isEliminated?: boolean;
   /** True after group stage ends — minting closed, OpenSea trade shown for surviving teams */
@@ -20,20 +19,13 @@ interface CountryCardProps {
   openSeaUrl?: string;
 }
 
-export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClosed, openSeaUrl }: CountryCardProps) {
+export function CountryCard({ country, isWinner, isEliminated, mintClosed, openSeaUrl }: CountryCardProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
   const [amount, setAmount]     = useState(1);
   const [hovered, setHovered]   = useState(false);
   const [mintedAmt, setMintedAmt] = useState(0);
   const [showModal, setShowModal] = useState(false);
-
-  const { data: mintCount } = useReadContract({
-    address: CONTRACT_ADDRESS, abi: ABI,
-    functionName: "userMintCount",
-    args: address ? [address, BigInt(country.id)] : undefined,
-    query: { enabled: !!address },
-  });
 
   const { data: balance } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
@@ -44,9 +36,7 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClos
 
   const { data: ethBalance } = useBalance({ address });
 
-  const remaining    = MAX_MINT_PER_WALLET - Number(mintCount ?? 0n);
   const totalCost    = MINT_PRICE * BigInt(amount);
-  const hasPool      = poolWei > 0n;
   const hasEnoughEth = !ethBalance || ethBalance.value >= totalCost;
 
   const { writeContract, data: txHash, isPending } = useWriteContract();
@@ -59,7 +49,7 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClos
 
   const handleMint = () => {
     if (!isConnected) return;
-    setMintedAmt(amount); // capture before tx clears
+    setMintedAmt(amount);
     writeContract({
       address: CONTRACT_ADDRESS, abi: ABI,
       functionName: "mintCountryNFT",
@@ -106,10 +96,6 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClos
         <p className="text-white font-bold text-sm leading-tight truncate">{country.name}</p>
 
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[10px] font-semibold"
-            style={{ color: hasPool ? "#00ff88" : "#6b7a9a" }}>
-            {hasPool ? `${formatEth(poolWei, 4)} ETH` : t.card_no_pool}
-          </span>
           <span className="text-[10px]" style={{ color: "#6b7a9a" }}>Grp {country.group}</span>
         </div>
 
@@ -169,22 +155,21 @@ export function CountryCard({ country, poolWei, isWinner, isEliminated, mintClos
                   <Minus size={12} />
                 </button>
                 <span className="flex-1 text-center text-white font-bold text-sm">{amount}</span>
-                <button onClick={() => setAmount(Math.min(remaining, amount + 1))}
+                <button onClick={() => setAmount(amount + 1)}
                   className="btn-ghost rounded-lg" style={{ padding: "4px 10px" }}>
                   <Plus size={12} />
                 </button>
               </div>
               <button onClick={handleMint}
-                disabled={!isConnected || isLoading || remaining === 0 || !hasEnoughEth}
+                disabled={!isConnected || isLoading || !hasEnoughEth}
                 title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
                 className="btn-neon w-full text-xs py-2 flex items-center justify-center gap-1.5"
                 style={!hasEnoughEth && isConnected ? { opacity: 0.5, cursor: "not-allowed", background: "rgba(255,60,60,0.12)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {isLoading
                   ? <><Loader2 size={12} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
-                  : isSuccess      ? t.card_minted
-                  : !isConnected   ? t.card_connect
-                  : remaining === 0 ? t.card_max
-                  : !hasEnoughEth  ? "Insufficient ETH"
+                  : isSuccess     ? t.card_minted
+                  : !isConnected  ? t.card_connect
+                  : !hasEnoughEth ? "Insufficient ETH"
                   : `${t.card_mint} · ${formatEth(totalCost, 4)} ETH`}
               </button>
             </div>

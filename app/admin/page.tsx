@@ -66,9 +66,9 @@ export default function AdminPage() {
 
   // Contract state
   const [totalPool,      setTotalPool]      = useState<bigint>(0n);
+  const [ncPool,         setNcPool]         = useState<bigint>(0n);
   const [scorerPool,     setScorerPool]     = useState<bigint>(0n);
   const [totalVol,       setTotalVol]       = useState<bigint>(0n);
-  const [allPools,       setAllPools]       = useState<bigint[]>([]);
   const [allSupplies,    setAllSupplies]    = useState<bigint[]>([]);
   const [ncFinalized,    setNcFinalized]    = useState(false);
   const [tsFinalized,    setTsFinalized]    = useState(false);
@@ -79,16 +79,13 @@ export default function AdminPage() {
   const [elimStatus,     setElimStatus]     = useState<boolean[]>([]);
   const [loading,        setLoading]        = useState(false);
 
-  // Elimination state
-  const [elimLoserIds,  setElimLoserIds]  = useState<number[]>([]);   // selected losers
-  const [elimWinnerMap, setElimWinnerMap] = useState<Record<number, number>>({});  // loserId → winnerId
+  // Elimination state — no winner assignment needed in v6
+  const [elimLoserIds, setElimLoserIds] = useState<number[]>([]);
 
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
   const [tsPlayer,      setTsPlayer]      = useState("");
   const [tsCustomInput, setTsCustomInput] = useState("");
-  const [advLoser,      setAdvLoser]      = useState("");
-  const [advWinner,     setAdvWinner]     = useState("");
   const [txPending,     setTxPending]     = useState<string | null>(null);
   const [txSuccess,     setTxSuccess]     = useState<string | null>(null);
   const [txError,       setTxError]       = useState<string | null>(null);
@@ -97,11 +94,11 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, sp, tv, ap, ncF, tsF, wId, fs, owner, paused, maint, elim] = await Promise.all([
+      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, paused, maint, elim] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalGlobalVolumeETH" }),
-        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalized" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" }),
@@ -113,9 +110,9 @@ export default function AdminPage() {
       ]);
 
       setTotalPool(tp as bigint);
+      setNcPool(ncp as bigint);
       setScorerPool(sp as bigint);
       setTotalVol(tv as bigint);
-      setAllPools(Array.from(ap as unknown as bigint[]));
       setNcFinalized(ncF as boolean);
       setTsFinalized(tsF as boolean);
       setWinningId(wId as bigint);
@@ -205,18 +202,17 @@ export default function AdminPage() {
 
   const isOwner = address && ownerAddress && address === ownerAddress;
 
-  // ── Active countries ──
+  // ── Active countries (has supply) ──
   const activeCountries = COUNTRIES
-    .map((c, i) => ({ ...c, pool: allPools[c.id] ?? 0n, supply: allSupplies[i] ?? 0n }))
-    .filter(c => c.pool > 0n || c.supply > 0n)
-    .sort((a, b) => (b.pool > a.pool ? 1 : -1));
+    .map((c, i) => ({ ...c, supply: allSupplies[i] ?? 0n }))
+    .filter(c => c.supply > 0n)
+    .sort((a, b) => (b.supply > a.supply ? 1 : -1));
 
-  // ── Math preview ──
+  // ── Math preview for NC finalize ──
   const previewId      = ncWinnerId ? Number(ncWinnerId) : null;
   const previewCountry = previewId ? COUNTRIES.find(c => c.id === previewId) : null;
-  const previewPool    = previewId ? (allPools[previewId] ?? 0n) : 0n;
   const previewSupply  = previewId ? (allSupplies[COUNTRIES.findIndex(c => c.id === previewId)] ?? 0n) : 0n;
-  const previewPayout  = previewSupply > 0n ? (Number(previewPool) * 0.95) / Number(previewSupply) / 1e18 : 0;
+  const previewPayout  = previewSupply > 0n ? (Number(ncPool) * 0.95) / Number(previewSupply) / 1e18 : 0;
 
   const inputStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
@@ -347,6 +343,7 @@ export default function AdminPage() {
         {/* Live Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 28 }}>
           <Stat label="Total Prize Pool"  value={`${fmt(totalPool)} ETH`}  color="#fbbf24" />
+          <Stat label="Nations Cup Pool"  value={`${fmt(ncPool)} ETH`}     color="#00ff88" />
           <Stat label="Top Scorer Pool"   value={`${fmt(scorerPool)} ETH`} color="#7c3aed" />
           <Stat label="Total Volume"      value={`${fmt(totalVol)} ETH`}   color="#00ff88" />
           <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#00ff88" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
@@ -366,24 +363,19 @@ export default function AdminPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                    {["ID", "Country", "Pool (ETH)", "NFTs Minted", "Payout/NFT if wins"].map(h => (
+                    {["ID", "Country", "NFTs Minted"].map(h => (
                       <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#6b7a9a", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {activeCountries.map(c => {
-                    const payout = c.supply > 0n ? (Number(c.pool) * 0.95) / Number(c.supply) / 1e18 : 0;
-                    return (
-                      <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <td style={{ padding: "8px 12px", color: "#6b7a9a" }}>#{c.id}</td>
-                        <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>{c.name}</td>
-                        <td style={{ padding: "8px 12px", color: "#fbbf24", fontFamily: "monospace" }}>{(Number(c.pool)/1e18).toFixed(4)}</td>
-                        <td style={{ padding: "8px 12px", color: "#00ff88", fontWeight: 700 }}>{c.supply.toString()}</td>
-                        <td style={{ padding: "8px 12px", color: "#b0bcd4", fontFamily: "monospace" }}>{payout > 0 ? `${payout.toFixed(5)} ETH` : "—"}</td>
-                      </tr>
-                    );
-                  })}
+                  {activeCountries.map(c => (
+                    <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding: "8px 12px", color: "#6b7a9a" }}>#{c.id}</td>
+                      <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>{c.name}</td>
+                      <td style={{ padding: "8px 12px", color: "#00ff88", fontWeight: 700 }}>{c.supply.toString()}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -404,11 +396,11 @@ export default function AdminPage() {
                 <select value={ncWinnerId} onChange={e => setNcWinnerId(e.target.value)} style={{ ...inputStyle, maxWidth: 320, colorScheme: "dark" }}>
                   <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select winning country —</option>
                   {COUNTRIES
-                    .map((c, i) => ({ ...c, pool: allPools[c.id] ?? 0n, supply: allSupplies[i] ?? 0n }))
-                    .sort((a, b) => (b.supply > a.supply ? 1 : b.supply < a.supply ? -1 : b.pool > a.pool ? 1 : -1))
+                    .map((c, i) => ({ ...c, supply: allSupplies[i] ?? 0n }))
+                    .sort((a, b) => (b.supply > a.supply ? 1 : -1))
                     .map(c => (
                       <option key={c.id} value={c.id} style={{ background: "#0d1117", color: c.supply > 0n ? "#fff" : "#9ca3af" }}>
-                        {c.supply === 0n ? "⚠️ " : ""}{c.name} (#{c.id}) — {(Number(c.pool)/1e18).toFixed(4)} ETH · {c.supply.toString()} NFTs
+                        {c.supply === 0n ? "⚠️ " : ""}{c.name} (#{c.id}) — {c.supply.toString()} NFTs
                       </option>
                     ))
                   }
@@ -430,12 +422,12 @@ export default function AdminPage() {
                 <div style={{ padding: "14px 16px", background: "rgba(251,191,36,0.05)", borderRadius: 12, border: "1px solid rgba(251,191,36,0.15)", fontSize: 13 }}>
                   <p style={{ color: "#fbbf24", fontWeight: 800, marginBottom: 8 }}>📊 Math Preview — {previewCountry.name}</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>POOL</p><p style={{ color: "#fff", fontWeight: 700, fontFamily: "monospace" }}>{(Number(previewPool)/1e18).toFixed(4)} ETH</p></div>
-                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>TOTAL NFTs</p><p style={{ color: "#fff", fontWeight: 700 }}>{previewSupply.toString()}</p></div>
+                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>MAIN NC POOL</p><p style={{ color: "#fff", fontWeight: 700, fontFamily: "monospace" }}>{(Number(ncPool)/1e18).toFixed(4)} ETH</p></div>
+                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>WINNER NFTs</p><p style={{ color: "#fff", fontWeight: 700 }}>{previewSupply.toString()}</p></div>
                     <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>PAYOUT/NFT (95%)</p><p style={{ color: "#00ff88", fontWeight: 900, fontFamily: "monospace" }}>{previewPayout.toFixed(5)} ETH</p></div>
                   </div>
                   <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 8 }}>
-                    ({(Number(previewPool)/1e18).toFixed(4)} × 0.95) ÷ {previewSupply.toString()} = {previewPayout.toFixed(6)} ETH per NFT
+                    ({(Number(ncPool)/1e18).toFixed(4)} × 0.95) ÷ {previewSupply.toString()} = {previewPayout.toFixed(6)} ETH per NFT
                   </p>
                 </div>
               )}
@@ -515,73 +507,26 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Advance Stage */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(124,58,237,0.15)" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>↗️ Advance Stage (Pool Roll-Over)</h2>
-          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>Roll loser's pool into winner's pool after a match.</p>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <select value={advLoser} onChange={e => setAdvLoser(e.target.value)} style={{ ...inputStyle, maxWidth: 220, colorScheme: "dark" }}>
-              <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Loser (eliminated) —</option>
-              {activeCountries.map(c => <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id})</option>)}
-            </select>
-            <select value={advWinner} onChange={e => setAdvWinner(e.target.value)} style={{ ...inputStyle, maxWidth: 220, colorScheme: "dark" }}>
-              <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Winner (advances) —</option>
-              {activeCountries.map(c => <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>{c.name} (#{c.id})</option>)}
-            </select>
-            <button
-              disabled={!advLoser || !advWinner || advLoser === advWinner || txPending === "advance"}
-              onClick={() => sendTx("advanceStage", [BigInt(advLoser), BigInt(advWinner)], "advance")}
-              style={{ background: (!advLoser || !advWinner || advLoser === advWinner) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#f59e0b,#d97706)", color: (!advLoser || !advWinner || advLoser === advWinner) ? "#4a5568" : "#050810", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-              {txPending === "advance" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-              {txPending === "advance" ? "Confirming…" : "Roll Pool"}
-            </button>
-          </div>
-        </div>
-
-        {/* Batch Elimination */}
+        {/* Eliminate Countries */}
         <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(239,68,68,0.2)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⛔ Eliminate Countries</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
-            Mark countries as eliminated and roll their pools to the winner.<br />
-            Group stage: add 16 losers, assign each a pool recipient (group 1st place).<br />
-            Knockout: add 1 loser + the team that beat them.
+            Mark countries as eliminated. Funds stay in the main pool — no movement needed.<br />
+            Group stage: add all 16 losers at once. Knockout: add 1 per match.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Existing pairs */}
+            {/* Selected losers list */}
             {elimLoserIds.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
-                <p style={{ color: "#6b7a9a", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  Selected ({elimLoserIds.length})
-                </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
                 {elimLoserIds.map(loserId => {
                   const loser = COUNTRIES.find(c => c.id === loserId);
                   return (
-                    <div key={loserId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, flexWrap: "wrap" }}>
-                      <span style={{ color: "#ff6060", fontWeight: 700, fontSize: 13, flex: 1, minWidth: 120 }}>
-                        ⛔ {loser?.name ?? `#${loserId}`}
-                      </span>
-                      <span style={{ color: "#6b7a9a", fontSize: 13 }}>→ pool to</span>
-                      <select
-                        value={elimWinnerMap[loserId] ?? ""}
-                        onChange={e => setElimWinnerMap(prev => ({ ...prev, [loserId]: Number(e.target.value) }))}
-                        style={{ ...inputStyle, width: "auto", minWidth: 160, colorScheme: "dark" }}
-                      >
-                        <option value="" style={{ background: "#0d1117", color: "#6b7a9a" }}>— Select winner —</option>
-                        {COUNTRIES
-                          .filter(c => !elimLoserIds.includes(c.id) || c.id === (elimWinnerMap[loserId] ?? -1))
-                          .map(c => (
-                            <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>
-                              {c.name} (#{c.id})
-                            </option>
-                          ))}
-                      </select>
+                    <div key={loserId} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10 }}>
+                      <span style={{ color: "#ff6060", fontWeight: 700, fontSize: 13 }}>⛔ {loser?.name ?? `#${loserId}`}</span>
                       <button
-                        onClick={() => {
-                          setElimLoserIds(prev => prev.filter(id => id !== loserId));
-                          setElimWinnerMap(prev => { const n = { ...prev }; delete n[loserId]; return n; });
-                        }}
-                        style={{ background: "transparent", border: "none", color: "#6b7a9a", cursor: "pointer", fontSize: 18, padding: "0 4px", lineHeight: 1 }}
+                        onClick={() => setElimLoserIds(prev => prev.filter(id => id !== loserId))}
+                        style={{ background: "transparent", border: "none", color: "#6b7a9a", cursor: "pointer", fontSize: 16, padding: "0 2px", lineHeight: 1 }}
                       >✕</button>
                     </div>
                   );
@@ -589,7 +534,7 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Add new loser */}
+            {/* Add country */}
             {!ncFinalized && (
               <select
                 onChange={e => {
@@ -605,44 +550,38 @@ export default function AdminPage() {
                   .filter(c => !elimStatus[c.id] && !elimLoserIds.includes(c.id))
                   .map(c => (
                     <option key={c.id} value={c.id} style={{ background: "#0d1117", color: "#fff" }}>
-                      {c.name} (#{c.id}){(allPools[c.id] ?? 0n) > 0n ? ` — ${(Number(allPools[c.id])/1e18).toFixed(4)} ETH` : ""}
+                      {c.name} (#{c.id})
                     </option>
                   ))}
               </select>
             )}
 
             {/* Execute */}
-            {elimLoserIds.length > 0 && (() => {
-              const allAssigned = elimLoserIds.every(id => !!elimWinnerMap[id]);
-              const ready = allAssigned && elimLoserIds.length > 0;
-              return (
-                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
-                  <button
-                    disabled={!ready || txPending === "eliminate"}
-                    onClick={() => {
-                      const winners = elimLoserIds.map(id => elimWinnerMap[id]);
-                      sendTx("eliminateAndRolloverBatch", [elimLoserIds.map(BigInt), winners.map(BigInt)], "eliminate")
-                        .then(() => { setElimLoserIds([]); setElimWinnerMap({}); });
-                    }}
-                    style={{
-                      background: ready ? "linear-gradient(135deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.05)",
-                      color: ready ? "#fff" : "#4a5568",
-                      border: "none", borderRadius: 12, padding: "10px 20px",
-                      fontWeight: 800, fontSize: 13, cursor: ready ? "pointer" : "not-allowed",
-                      display: "flex", alignItems: "center", gap: 8,
-                    }}
-                  >
-                    {txPending === "eliminate" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-                    {txPending === "eliminate" ? "Confirming…" : `Eliminate ${elimLoserIds.length} ${elimLoserIds.length === 1 ? "Country" : "Countries"}`}
-                  </button>
-                  {!allAssigned && <p style={{ color: "#fbbf24", fontSize: 12 }}>⚠️ Assign a winner for each row</p>}
-                  <button
-                    onClick={() => { setElimLoserIds([]); setElimWinnerMap({}); }}
-                    style={{ background: "transparent", border: "none", color: "#6b7a9a", fontSize: 12, cursor: "pointer" }}
-                  >Clear all</button>
-                </div>
-              );
-            })()}
+            {elimLoserIds.length > 0 && (
+              <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+                <button
+                  disabled={txPending === "eliminate"}
+                  onClick={() => {
+                    sendTx("eliminateCountries", [elimLoserIds.map(BigInt)], "eliminate")
+                      .then(() => setElimLoserIds([]));
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                    color: "#fff",
+                    border: "none", borderRadius: 12, padding: "10px 20px",
+                    fontWeight: 800, fontSize: 13, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}
+                >
+                  {txPending === "eliminate" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                  {txPending === "eliminate" ? "Confirming…" : `Eliminate ${elimLoserIds.length} ${elimLoserIds.length === 1 ? "Country" : "Countries"}`}
+                </button>
+                <button
+                  onClick={() => setElimLoserIds([])}
+                  style={{ background: "transparent", border: "none", color: "#6b7a9a", fontSize: 12, cursor: "pointer" }}
+                >Clear all</button>
+              </div>
+            )}
 
             {/* Already eliminated */}
             {elimStatus.filter(Boolean).length > 0 && (

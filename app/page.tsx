@@ -48,9 +48,9 @@ export default function Home() {
   // Ensures modal init logic runs only once after data is ready
   const modalInitRef = useRef(false);
 
-  // Prefetch pools (controls loading screen)
+  // Prefetch main NC pool (controls loading screen)
   const { data: poolData } = useReadContract({
-    address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllCountryPools",
+    address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance",
   });
 
   // Finalization state
