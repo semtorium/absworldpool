@@ -74,7 +74,7 @@ export function CountryCard({ country, isWinner, isEliminated, mintClosed, openS
       style={{ opacity: isEliminated ? 0.35 : 1, filter: isEliminated ? "grayscale(0.8)" : "none" }}>
 
       {/* Flag */}
-      <Image src={getFlagUrl(country.flagCode, 320)} alt={country.name} fill
+      <Image src={country.id === 9 ? "/nft-test.jpg" : getFlagUrl(country.flagCode, 320)} alt={country.name} fill
         className="object-cover transition-transform duration-300"
         style={{ transform: hovered ? "scale(1.06)" : "scale(1)" }}
         unoptimized />
