@@ -6,7 +6,7 @@ import { abstractTestnet } from "viem/chains";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
-import { TOP_SCORER_PLAYERS } from "@/lib/config";
+import { TOP_SCORER_PLAYERS, EXTRA_ADMIN_WALLETS } from "@/lib/config";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -200,7 +200,10 @@ export default function AdminPage() {
     }
   };
 
-  const isOwner = address && ownerAddress && address === ownerAddress;
+  // Owner veya EXTRA_ADMIN_WALLETS listesindeki cüzdanlar panele erişebilir.
+  // Not: Sadece owner cüzdanı TX gönderebilir (contract onlyOwner modifier).
+  const isOwner      = address && ownerAddress && address === ownerAddress;
+  const isAuthorized = isOwner || (!!address && EXTRA_ADMIN_WALLETS.map(w => w.toLowerCase()).includes(address.toLowerCase()));
 
   // ── Active countries (has supply) ──
   const activeCountries = COUNTRIES
@@ -269,8 +272,8 @@ export default function AdminPage() {
     </div>
   );
 
-  // ── Not owner ──
-  if (address && ownerAddress && !isOwner) return (
+  // ── Not authorized ──
+  if (address && ownerAddress && !isAuthorized) return (
     <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       {showPicker && <WalletPicker />}
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
@@ -312,6 +315,14 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Read-only warning for extra admin wallets */}
+        {!isOwner && isAuthorized && (
+          <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12 }}>
+            <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 13 }}>👁️ Read-Only Mode</p>
+            <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 2 }}>Bu cüzdan admin listesinde ama owner değil. Tüm verileri görebilirsin, işlem atmaya çalışırsan revert olur.</p>
+          </div>
+        )}
 
         {/* Wrong chain warning */}
         {chainId !== null && chainId !== 11124 && (

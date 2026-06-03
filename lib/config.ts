@@ -4,6 +4,13 @@ import { abstractTestnet } from "viem/chains";
 // Mainnet deploy sonrası bu adresi güncelle
 export const CONTRACT_ADDRESS = "0x9a0894c8FCf2f858E0598ffbed955E8d864E3181" as `0x${string}`;
 
+// ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
+// Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
+// (lowercase olmalı — contract `onlyOwner` hâlâ geçerli, TX atmaya çalışırsa revert olur)
+export const EXTRA_ADMIN_WALLETS: string[] = [
+  // "0xTEST_WALLET_ADRESIN_BURAYA",
+];
+
 // ── Ağ ────────────────────────────────────────────────────────
 export const CHAIN = abstractTestnet;
 
