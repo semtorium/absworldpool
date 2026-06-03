@@ -31,9 +31,11 @@ export function CountryMintModal({
 }: CountryMintModalProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
-  const [amount, setAmount]       = useState(1);
-  const [mintedAmt, setMintedAmt] = useState(0);
+  const [amount, setAmount]           = useState(1);
+  const [mintedAmt, setMintedAmt]     = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  // Tracks button "Minted" state separately so we can reset it when congrats closes
+  const [mintDone, setMintDone]       = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Body scroll lock
@@ -47,14 +49,14 @@ export function CountryMintModal({
     if (e.target === overlayRef.current) onClose();
   };
 
-  const { data: totalSupply } = useReadContract({
+  const { data: totalSupply, refetch: refetchSupply } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "countryTotalSupply",
     args: [BigInt(country.id)],
     query: { refetchInterval: 5_000 },
   });
 
-  const { data: userBalance } = useReadContract({
+  const { data: userBalance, refetch: refetchBalance } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "balanceOf",
     args: address ? [address, BigInt(country.id)] : undefined,
@@ -71,8 +73,20 @@ export function CountryMintModal({
   const isLoading = isPending || isConfirming;
 
   useEffect(() => {
-    if (isSuccess && txHash) setShowSuccess(true);
+    if (isSuccess && txHash) {
+      setShowSuccess(true);
+      setMintDone(true);
+    }
   }, [isSuccess, txHash]);
+
+  // Congrats modal kapanınca: modal açık kalır, data yenilenir, buton resetlenir
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    setMintDone(false);
+    setAmount(1);
+    refetchSupply();
+    refetchBalance();
+  };
 
   const handleMint = () => {
     if (!isConnected) return;
@@ -98,7 +112,7 @@ export function CountryMintModal({
           country={country}
           amount={mintedAmt}
           txHash={txHash}
-          onClose={() => { setShowSuccess(false); onClose(); }}
+          onClose={handleSuccessClose}
         />
       )}
 
@@ -376,7 +390,7 @@ export function CountryMintModal({
                 >
                   {isLoading
                     ? <><Loader2 size={15} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
-                    : isSuccess     ? t.card_minted
+                    : mintDone      ? t.card_minted
                     : !isConnected  ? t.card_connect
                     : !hasEnoughEth ? "Insufficient ETH"
                     : `${t.card_mint} · ${formatEth(totalCost, 4)} ETH`}
