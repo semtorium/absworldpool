@@ -46,12 +46,12 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
       style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       {/* Confetti */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 z-[201] pointer-events-none overflow-hidden">
         {pieces.map(p => (
           <div
             key={p.id}
