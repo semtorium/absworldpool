@@ -290,6 +290,126 @@ async function main() {
     console.log(`  No votes cast yet.`);
   }
 
+  // ── Per-Wallet Breakdown ──
+  const MINT_PRICE_ETH   = 0.0022;
+  const TICKET_PRICE_ETH = 0.0018;
+  const DEV_RATE         = 0.20;
+
+  // Aggregate per wallet
+  const wallets = {};
+  const track = (addr) => {
+    const a = addr?.toLowerCase() ?? "unknown";
+    if (!wallets[a]) wallets[a] = { mintQty:0, ticketQty:0, spentMintEth:0, spentTicketEth:0, claimedNcEth:0, claimedTsEth:0 };
+    return wallets[a];
+  };
+
+  for (const l of mintLogs) {
+    const qty = Number(l.args.amount ?? 0n);
+    const w = track(l.args.user);
+    w.mintQty      += qty;
+    w.spentMintEth += qty * MINT_PRICE_ETH;
+  }
+  for (const l of ticketLogs) {
+    const qty = Number(l.args.quantity ?? 0n);
+    const w = track(l.args.user);
+    w.ticketQty      += qty;
+    w.spentTicketEth += qty * TICKET_PRICE_ETH;
+  }
+  for (const l of ncClaimLogs) {
+    track(l.args.user).claimedNcEth += Number(l.args.reward ?? 0n) / 1e18;
+  }
+  for (const l of tsClaimLogs) {
+    track(l.args.user).claimedTsEth += Number(l.args.reward ?? 0n) / 1e18;
+  }
+
+  const walletList = Object.entries(wallets)
+    .map(([addr, w]) => {
+      const totalSpent    = w.spentMintEth + w.spentTicketEth;
+      const totalClaimed  = w.claimedNcEth + w.claimedTsEth;
+      const devFromWallet = totalSpent * DEV_RATE;
+      const poolFromWallet= totalSpent * (1 - DEV_RATE);
+      const netPnl        = totalClaimed - totalSpent;
+      return { addr, ...w, totalSpent, totalClaimed, devFromWallet, poolFromWallet, netPnl };
+    })
+    .sort((a, b) => b.totalSpent - a.totalSpent);
+
+  if (walletList.length > 0) {
+    console.log(sec("PER-WALLET BREAKDOWN"));
+    console.log(`  ${"Wallet".padEnd(44)} ${"Mints".padStart(5)} ${"Tkts".padStart(5)} ${"Spent".padStart(10)} ${"→Dev".padStart(9)} ${"→Pool".padStart(9)} ${"Claimed".padStart(10)} ${"Net P&L".padStart(11)}`);
+    console.log(`  ${line("-", 107)}`);
+    let totalSpentSum = 0, totalDevSum = 0, totalPoolSum = 0, totalClaimedSum = 0;
+    for (const w of walletList) {
+      const pnlSign = w.netPnl >= 0 ? "+" : "";
+      console.log(
+        `  ${w.addr.padEnd(44)}` +
+        ` ${String(w.mintQty).padStart(5)}` +
+        ` ${String(w.ticketQty).padStart(5)}` +
+        ` ${w.totalSpent.toFixed(4).padStart(10)} ETH` +
+        ` ${w.devFromWallet.toFixed(4).padStart(9)}` +
+        ` ${w.poolFromWallet.toFixed(4).padStart(9)}` +
+        ` ${w.totalClaimed.toFixed(4).padStart(10)}` +
+        ` ${(pnlSign + w.netPnl.toFixed(4)).padStart(10)} ETH`
+      );
+      totalSpentSum   += w.totalSpent;
+      totalDevSum     += w.devFromWallet;
+      totalPoolSum    += w.poolFromWallet;
+      totalClaimedSum += w.totalClaimed;
+    }
+    console.log(`  ${line("-", 107)}`);
+    const totalPnl = totalClaimedSum - totalSpentSum;
+    const pnlSign  = totalPnl >= 0 ? "+" : "";
+    console.log(
+      `  ${"TOTALS".padEnd(44)}` +
+      ` ${String(totalMints).padStart(5)}` +
+      ` ${String(totalTickets).padStart(5)}` +
+      ` ${totalSpentSum.toFixed(4).padStart(10)} ETH` +
+      ` ${totalDevSum.toFixed(4).padStart(9)}` +
+      ` ${totalPoolSum.toFixed(4).padStart(9)}` +
+      ` ${totalClaimedSum.toFixed(4).padStart(10)}` +
+      ` ${(pnlSign + totalPnl.toFixed(4)).padStart(10)} ETH`
+    );
+  }
+
+  // ── Dev Fee Verification ──
+  console.log(sec("DEV FEE VERIFICATION"));
+  const mintRevenue   = totalMints   * MINT_PRICE_ETH;
+  const ticketRevenue = totalTickets * TICKET_PRICE_ETH;
+  const grossRevenue  = mintRevenue + ticketRevenue;
+  const expectedDevCut = grossRevenue * DEV_RATE;
+  const expectedNcPool  = mintRevenue   * (1 - DEV_RATE);
+  const expectedTsPool  = ticketRevenue * (1 - DEV_RATE);
+  const expectedTotalPool = expectedNcPool + expectedTsPool;
+  const actualPoolAfterClaims = Number(BigInt(totalLocked)) / 1e18;
+
+  console.log(`  Mint Revenue       : ${totalMints} NFTs × 0.0022 ETH = ${mintRevenue.toFixed(6)} ETH`);
+  console.log(`  Ticket Revenue     : ${totalTickets} tickets × 0.0018 ETH = ${ticketRevenue.toFixed(6)} ETH`);
+  console.log(`  Gross Revenue      : ${grossRevenue.toFixed(6)} ETH`);
+  console.log(``);
+  console.log(`  Expected dev cut (20%)   : ${expectedDevCut.toFixed(6)} ETH`);
+  console.log(`  Expected NC pool  (80%)  : ${expectedNcPool.toFixed(6)} ETH`);
+  console.log(`  Expected TS pool  (80%)  : ${expectedTsPool.toFixed(6)} ETH`);
+  console.log(`  Expected total pool      : ${expectedTotalPool.toFixed(6)} ETH`);
+  console.log(``);
+  console.log(`  Actual locked in contract: ${actualPoolAfterClaims.toFixed(6)} ETH`);
+  console.log(`  Already claimed (NC+TS)  : ${(Number(ncClaimedTotal + tsClaimedTotal) / 1e18).toFixed(6)} ETH`);
+  console.log(`  Pool + claimed = ?       : ${(actualPoolAfterClaims + Number(ncClaimedTotal + tsClaimedTotal) / 1e18).toFixed(6)} ETH`);
+  console.log(``);
+
+  const claimedTotal = Number(ncClaimedTotal + tsClaimedTotal) / 1e18;
+  // Dev takes 5% settlement fee from each claim — must be included in the balance check
+  const ncSettlementFee = ncFinalized ? Number(finalNcPool) * 0.05 / 1e18 : 0;
+  const tsSettlementFee = tsFinalized ? Number(finalTsPool) * 0.05 / 1e18 : 0;
+  const totalSettlement = ncSettlementFee + tsSettlementFee;
+  console.log(`  Dev settlement fee (5% of finalized pools): ${totalSettlement.toFixed(6)} ETH`);
+  const poolPlusClaims = actualPoolAfterClaims + claimedTotal + totalSettlement;
+  const poolMatchOk = Math.abs(poolPlusClaims - expectedTotalPool) < 0.0001;
+  console.log(`  ${poolMatchOk ? "✅" : "❌"} pool + claims + settlement ≈ expected total pool (${poolMatchOk ? "MATCH" : "MISMATCH: delta " + (poolPlusClaims - expectedTotalPool).toFixed(6) + " ETH"})`);
+
+  // Gross volume vs totalGlobalVolumeETH cross-check
+  const onChainVol     = Number(totalVolEth) / 1e18;
+  const volMatchOk     = Math.abs(onChainVol - grossRevenue) < 0.0001;
+  console.log(`  ${volMatchOk ? "✅" : "❌"} contract totalGlobalVolumeETH (${onChainVol.toFixed(6)}) ≈ calculated gross (${grossRevenue.toFixed(6)})`);
+
   // ── Integrity Checks ──
   console.log(sec("INTEGRITY CHECKS"));
 
