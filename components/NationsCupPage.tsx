@@ -105,7 +105,14 @@ export function NationsCupPage() {
     ? COUNTRIES.filter(c => ownedIds.has(c.id))
     : COUNTRIES;
 
-  const filtered = baseList.slice().sort((a, b) => a.favoriteRank - b.favoriteRank);
+  const isElim = (id: number) => !!(eliminationStatus as boolean[] | undefined)?.[id];
+
+  const filtered = baseList.slice().sort((a, b) => {
+    const aElim = isElim(a.id);
+    const bElim = isElim(b.id);
+    if (aElim !== bElim) return aElim ? 1 : -1; // eliminated → end
+    return a.favoriteRank - b.favoriteRank;       // within same group → favoriteRank
+  });
 
   const canClaim  = tournamentFinalized && userBalance && Number(userBalance) > 0;
 
