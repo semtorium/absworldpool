@@ -141,6 +141,51 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
 
+          {/* Country NFTs */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">🌍</span>
+              <h3 className="font-bold text-white text-sm uppercase tracking-wide">{t.pd_my_nfts}</h3>
+              {ownedCountries.length > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-bold ml-auto"
+                  style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88" }}>
+                  {ownedCountries.length}
+                </span>
+              )}
+            </div>
+
+            {ownedCountries.length === 0 ? (
+              <div className="rounded-2xl p-6 text-center"
+                style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
+                <p className="text-3xl mb-2">🏳️</p>
+                <p className="text-sm font-semibold text-white">{t.pd_no_nfts}</p>
+                <p className="text-xs mt-1" style={{ color: "#6b7a9a" }}>
+                  {t.pd_no_nfts_sub}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {ownedCountries.map((country) => {
+                  const balance = nftBalances ? Number(nftBalances[country.id - 1]) : 0;
+                  return (
+                    <div key={country.id}
+                      className="relative rounded-xl overflow-hidden"
+                      style={{ aspectRatio: "3/2", border: "1px solid rgba(0,255,136,0.2)" }}>
+                      <Image src={getFlagUrl(country.flagCode, 160)} alt={country.name}
+                        fill className="object-cover" unoptimized />
+                      <div className="absolute inset-0"
+                        style={{ background: "linear-gradient(to top, rgba(5,8,16,0.85) 0%, transparent 50%)" }} />
+                      <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                        <p className="text-white text-[9px] font-bold truncate leading-tight">{country.name}</p>
+                        <p className="font-mono text-[10px] font-black" style={{ color: "#00ff88" }}>×{balance}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Top Scorer Tickets */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -191,51 +236,6 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <p className="text-xs mt-2 text-center py-3" style={{ color: "#6b7a9a" }}>
                 {t.pd_no_tickets}
               </p>
-            )}
-          </div>
-
-          {/* Country NFTs */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">🌍</span>
-              <h3 className="font-bold text-white text-sm uppercase tracking-wide">{t.pd_my_nfts}</h3>
-              {ownedCountries.length > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-bold ml-auto"
-                  style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88" }}>
-                  {ownedCountries.length}
-                </span>
-              )}
-            </div>
-
-            {ownedCountries.length === 0 ? (
-              <div className="rounded-2xl p-6 text-center"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
-                <p className="text-3xl mb-2">🏳️</p>
-                <p className="text-sm font-semibold text-white">{t.pd_no_nfts}</p>
-                <p className="text-xs mt-1" style={{ color: "#6b7a9a" }}>
-                  {t.pd_no_nfts_sub}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {ownedCountries.map((country) => {
-                  const balance = nftBalances ? Number(nftBalances[country.id - 1]) : 0;
-                  return (
-                    <div key={country.id}
-                      className="relative rounded-xl overflow-hidden"
-                      style={{ aspectRatio: "3/2", border: "1px solid rgba(0,255,136,0.2)" }}>
-                      <Image src={getFlagUrl(country.flagCode, 160)} alt={country.name}
-                        fill className="object-cover" unoptimized />
-                      <div className="absolute inset-0"
-                        style={{ background: "linear-gradient(to top, rgba(5,8,16,0.85) 0%, transparent 50%)" }} />
-                      <div className="absolute bottom-0 left-0 right-0 p-1.5">
-                        <p className="text-white text-[9px] font-bold truncate leading-tight">{country.name}</p>
-                        <p className="font-mono text-[10px] font-black" style={{ color: "#00ff88" }}>×{balance}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             )}
           </div>
 
