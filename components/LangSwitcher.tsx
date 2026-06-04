@@ -27,8 +27,7 @@ export function LangSwitcher() {
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#f0f4ff" }}>
-        <span className="text-base">{current.flag}</span>
-        <span className="hidden sm:block">{current.label}</span>
+        <span>{current.label}</span>
         <ChevronDown size={14} style={{ color: "#6b7a9a", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
 
@@ -46,7 +45,6 @@ export function LangSwitcher() {
               }}
               onMouseEnter={e => { if (lang !== l.code) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { if (lang !== l.code) e.currentTarget.style.background = "transparent"; }}>
-              <span className="text-lg">{l.flag}</span>
               <span>{l.label}</span>
               {lang === l.code && <span className="ml-auto text-xs">✓</span>}
             </button>
