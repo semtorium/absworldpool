@@ -105,7 +105,11 @@ export function NationsCupPage() {
     ? COUNTRIES.filter(c => ownedIds.has(c.id))
     : COUNTRIES;
 
-  const isElim = (id: number) => !!(eliminationStatus as boolean[] | undefined)?.[id];
+  // When tournament is finalized, all non-winner countries are treated as eliminated
+  const isElim = (id: number) => {
+    if (!!tournamentFinalized && Number(winningCountryId) !== id) return true;
+    return !!(eliminationStatus as boolean[] | undefined)?.[id];
+  };
 
   const filtered = baseList.slice().sort((a, b) => {
     const aElim = isElim(a.id);
@@ -123,7 +127,23 @@ export function NationsCupPage() {
         {/* Teams card */}
         <div className="glass-card p-4 text-center">
           <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_teams}</p>
-          <p className="text-xl font-black font-mono text-white">48</p>
+          {(() => {
+            const elimArr = eliminationStatus as boolean[] | undefined;
+            // When tournament finalized: only 1 team (champion) still competing
+            if (tournamentFinalized) {
+              return <p className="text-xl font-black font-mono" style={{ color: "#fbbf24" }}>1</p>;
+            }
+            const elimCount = elimArr ? elimArr.filter(Boolean).length : 0;
+            const remaining = 48 - elimCount;
+            return (
+              <p className="text-xl font-black font-mono text-white">
+                {remaining}
+                {elimCount > 0 && (
+                  <span className="text-xs font-semibold ml-1" style={{ color: "#6b7a9a" }}>/ 48</span>
+                )}
+              </p>
+            );
+          })()}
         </div>
 
         {/* Countdown / Live card */}

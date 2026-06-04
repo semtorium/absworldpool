@@ -19,6 +19,9 @@ import { EliminationSummaryModal }       from "@/components/EliminationSummaryMo
 import { ABI }                           from "@/lib/abi";
 import { CONTRACT_ADDRESS }              from "@/lib/config";
 
+// Namespace snapshot by contract address so redeployments reset it automatically
+const ELIM_SNAPSHOT_KEY = `abs_elim_snapshot_${CONTRACT_ADDRESS}`;
+
 const STORAGE_KEY = "abs_active_tab";
 
 export default function Home() {
@@ -96,7 +99,7 @@ export default function Home() {
       .filter(i => i > 0);
     if (currentElimIds.length === 0) return;
 
-    const stored = localStorage.getItem("abs_elim_snapshot");
+    const stored = localStorage.getItem(ELIM_SNAPSHOT_KEY);
     const lastSeen: number[] = stored ? JSON.parse(stored) : [];
     const newIds = currentElimIds.filter(id => !lastSeen.includes(id));
 
@@ -147,7 +150,7 @@ export default function Home() {
             const allElim = Array.from(eliminationStatus as unknown as boolean[])
               .map((v, i) => (v ? i : -1))
               .filter(i => i > 0);
-            localStorage.setItem("abs_elim_snapshot", JSON.stringify(allElim));
+            localStorage.setItem(ELIM_SNAPSHOT_KEY, JSON.stringify(allElim));
             setElimSummaryIds([]);
           }}
         />

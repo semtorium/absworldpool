@@ -70,7 +70,17 @@ export function TopScorerPage() {
   const { writeContract: vote, data: voteHash, isPending: isVoting }             = useWriteContract();
   const { isLoading: isVoteConfirming, isSuccess: isVoteSuccess } = useWaitForTransactionReceipt({ hash: voteHash });
   const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
-  const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
+  const { isLoading: isClaimConfirming, isSuccess: isClaimTxSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
+
+  // Persist claimed state to localStorage so "✓ Claimed" survives navigation
+  useEffect(() => {
+    if (isClaimTxSuccess && address) {
+      localStorage.setItem(`ts_claimed_${address.toLowerCase()}`, "true");
+    }
+  }, [isClaimTxSuccess, address]);
+
+  const isClaimSuccess = isClaimTxSuccess ||
+    (!!address && localStorage.getItem(`ts_claimed_${address.toLowerCase()}`) === "true");
 
   // Show modal + refetch after buy
   useEffect(() => {
@@ -165,17 +175,24 @@ export function TopScorerPage() {
               </p>
             </div>
 
-            {/* Only show claim button if user voted for the winner */}
-            {userWinnerVoteCount > 0 ? (
+            {/* Claimed already */}
+            {isClaimSuccess ? (
+              <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
+                style={{ background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.3)", color: "#00ff88" }}>
+                ✓ Claimed
+              </span>
+            ) : userWinnerVoteCount > 0 ? (
+              /* Active claim button */
               <button
                 onClick={() => claim({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "claimTopScorerRewards", args: [] })}
-                disabled={isClaiming || isClaimConfirming || isClaimSuccess}
+                disabled={isClaiming || isClaimConfirming}
                 className="btn-neon flex items-center gap-2 shrink-0"
-                style={{ background: isClaimSuccess ? "rgba(251,191,36,0.15)" : "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
+                style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
                 {(isClaiming || isClaimConfirming) && <Loader2 size={16} className="animate-spin" />}
-                {isClaimSuccess ? "✓ Claimed" : t.ts_claim}
+                {t.ts_claim}
               </button>
             ) : (
+              /* No winning votes */
               <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.04)", color: "#6b7a9a" }}>
                 No winning votes
