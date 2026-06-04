@@ -366,9 +366,9 @@ export default function AdminPage() {
 
         {/* Mint Control */}
         <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isPaused ? "rgba(239,68,68,0.4)" : "rgba(0,255,136,0.3)" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🎟️ Mint Kontrolü</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🎟️ Mint Control</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
-            Mint kapatılınca yeni NFT basılamaz. Mevcut NFT'ler trade edilmeye devam eder.
+            Closing mint prevents new NFTs from being minted. Existing NFTs remain tradeable.
           </p>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
@@ -386,12 +386,12 @@ export default function AdminPage() {
               </div>
               <div>
                 <p style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>
-                  {isPaused ? "Mint KAPALI" : "Mint AÇIK"}
+                  {isPaused ? "Mint CLOSED" : "Mint OPEN"}
                 </p>
                 <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
                   {isPaused
-                    ? "Kullanıcılar NFT mint edemiyor · Trade serbest"
-                    : "Kullanıcılar serbestçe NFT mint edebilir"}
+                    ? "Users cannot mint NFTs · Trading remains open"
+                    : "Users can freely mint country NFTs"}
                 </p>
               </div>
             </div>
@@ -408,7 +408,7 @@ export default function AdminPage() {
                 display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
               }}>
               {txPending === "mintToggle" && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
-              {txPending === "mintToggle" ? "Bekleniyor…" : isPaused ? "✓ Minti Aç" : "🔒 Minti Kapat"}
+              {txPending === "mintToggle" ? "Confirming…" : isPaused ? "✓ Open Mint" : "🔒 Close Mint"}
             </button>
           </div>
         </div>
@@ -664,7 +664,7 @@ export default function AdminPage() {
         {/* Contract Config */}
         <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚙️ Contract Config</h2>
-          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Acil durum kontrolleri. Mint açma/kapama için yukarıdaki <strong style={{ color: "#f0f4ff" }}>Mint Kontrolü</strong> bölümünü kullan.</p>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Emergency controls. To open or close minting, use the <strong style={{ color: "#f0f4ff" }}>Mint Control</strong> section above.</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
