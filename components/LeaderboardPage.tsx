@@ -72,7 +72,7 @@ export function LeaderboardPage() {
           .sort((a, b) => b.total - a.total || b.nfts - a.nfts)
           .map((e, i) => ({ ...e, rank: i + 1 }));
 
-        setEntries(sorted);
+        setEntries(sorted.slice(0, 50));
       } catch {
         // silent fail
       } finally {
