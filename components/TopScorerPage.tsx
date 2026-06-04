@@ -45,6 +45,15 @@ export function TopScorerPage() {
   const { data: finalTopScorer }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" });
   const { data: votingClosed }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "votingClosed", query: { refetchInterval: 30_000 } });
 
+  // How many votes did the user cast for the winning player? (only relevant after finalization)
+  const { data: userWinnerVotes } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "getUserVotesForPlayer",
+    args: address && finalTopScorer ? [address, finalTopScorer as string] : undefined,
+    query: { enabled: !!address && !!topScorerFinalized && !!finalTopScorer },
+  });
+  const userWinnerVoteCount = Number(userWinnerVotes ?? 0n);
+
   // Global votes per player — 5s refresh for live vote bar
   const playerVoteQueries = TOP_SCORER_PLAYERS.map(p =>
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -141,24 +150,38 @@ export function TopScorerPage() {
 
       {/* Claim banner */}
       {topScorerFinalized && isConnected && (
-        <div className="glass-card p-5 flex items-center justify-between gap-4"
-          style={{ borderColor: "rgba(251,191,36,0.4)", background: "rgba(251,191,36,0.05)" }}>
-          <div>
-            <p className="font-bold text-white flex items-center gap-2">
-              <Trophy size={18} style={{ color: "#fbbf24" }} /> {t.ts_finalized}
-            </p>
-            <p className="text-sm mt-0.5" style={{ color: "#6b7a9a" }}>
-              {t.ts_winner}: <span className="text-white font-semibold">{finalTopScorer as string}</span>
-            </p>
+        <div className="glass-card p-5"
+          style={{
+            borderColor: userWinnerVoteCount > 0 ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.08)",
+            background:  userWinnerVoteCount > 0 ? "rgba(251,191,36,0.05)" : "rgba(255,255,255,0.02)",
+          }}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-bold text-white flex items-center gap-2">
+                <Trophy size={18} style={{ color: "#fbbf24" }} /> {t.ts_finalized}
+              </p>
+              <p className="text-sm mt-0.5" style={{ color: "#6b7a9a" }}>
+                {t.ts_winner}: <span className="text-white font-semibold">{finalTopScorer as string}</span>
+              </p>
+            </div>
+
+            {/* Only show claim button if user voted for the winner */}
+            {userWinnerVoteCount > 0 ? (
+              <button
+                onClick={() => claim({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "claimTopScorerRewards", args: [] })}
+                disabled={isClaiming || isClaimConfirming || isClaimSuccess}
+                className="btn-neon flex items-center gap-2 shrink-0"
+                style={{ background: isClaimSuccess ? "rgba(251,191,36,0.15)" : "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
+                {(isClaiming || isClaimConfirming) && <Loader2 size={16} className="animate-spin" />}
+                {isClaimSuccess ? "✓ Claimed" : t.ts_claim}
+              </button>
+            ) : (
+              <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.04)", color: "#6b7a9a" }}>
+                No winning votes
+              </span>
+            )}
           </div>
-          <button
-            onClick={() => claim({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "claimTopScorerRewards", args: [] })}
-            disabled={isClaiming || isClaimConfirming}
-            className="btn-neon flex items-center gap-2"
-            style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
-            {(isClaiming || isClaimConfirming) && <Loader2 size={16} className="animate-spin" />}
-            {isClaimSuccess ? "✓" : t.ts_claim}
-          </button>
         </div>
       )}
 
