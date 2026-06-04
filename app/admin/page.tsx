@@ -80,6 +80,8 @@ export default function AdminPage() {
   const [isMaintenance,  setIsMaintenance]  = useState(false);
   const [elimStatus,     setElimStatus]     = useState<boolean[]>([]);
   const [loading,        setLoading]        = useState(false);
+  const [ncFinalizedAt,  setNcFinalizedAt]  = useState<bigint>(0n);
+  const [tsFinalizedAt,  setTsFinalizedAt]  = useState<bigint>(0n);
 
   // Elimination state — no winner assignment needed in v6
   const [elimLoserIds, setElimLoserIds] = useState<number[]>([]);
@@ -96,7 +98,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim] = await Promise.all([
+      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim, ncAt, tsAt] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
@@ -111,6 +113,8 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupFinalizedAt" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalizedAt" }),
       ]);
 
       setTotalPool(tp as bigint);
@@ -127,6 +131,8 @@ export default function AdminPage() {
       setIsPaused(paused as boolean);
       setIsMaintenance(maint as boolean);
       setElimStatus(Array.from(elim as unknown as boolean[]));
+      setNcFinalizedAt(ncAt as bigint);
+      setTsFinalizedAt(tsAt as bigint);
 
       // Fetch supplies for active countries
       const supplies = await Promise.all(
@@ -724,6 +730,130 @@ export default function AdminPage() {
             )}
           </div>
         </div>
+
+        {/* Withdraw Unclaimed Pools */}
+        {(() => {
+          const FIFTEEN_DAYS = 15 * 24 * 60 * 60; // seconds
+          const nowSec = Math.floor(Date.now() / 1000);
+
+          const ncUnlockAt  = ncFinalizedAt > 0n ? Number(ncFinalizedAt) + FIFTEEN_DAYS : null;
+          const tsUnlockAt  = tsFinalizedAt > 0n ? Number(tsFinalizedAt) + FIFTEEN_DAYS : null;
+
+          const ncUnlocked  = ncUnlockAt !== null && nowSec >= ncUnlockAt;
+          const tsUnlocked  = tsUnlockAt !== null && nowSec >= tsUnlockAt;
+
+          const fmtCountdown = (unlockAt: number) => {
+            const diff = unlockAt - nowSec;
+            if (diff <= 0) return null;
+            const d = Math.floor(diff / 86400);
+            const h = Math.floor((diff % 86400) / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            return `${d}d ${h}h ${m}m remaining`;
+          };
+
+          if (!ncFinalized && !tsFinalized) return null; // nothing finalized yet, hide section
+
+          return (
+            <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(0,255,136,0.15)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>💰 Withdraw Unclaimed Pools</h2>
+              <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>
+                After 15 days from finalization, any ETH not claimed by winners can be withdrawn to the owner wallet.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+                {/* Nations Cup */}
+                {ncFinalized && (
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                    padding: "16px 20px", borderRadius: 14,
+                    background: ncUnlocked ? "rgba(0,255,136,0.05)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${ncUnlocked ? "rgba(0,255,136,0.25)" : "rgba(255,255,255,0.08)"}`,
+                  }}>
+                    <div>
+                      <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>🏆 Nations Cup Unclaimed</p>
+                      <p style={{ color: "#fbbf24", fontWeight: 700, fontFamily: "monospace", fontSize: 15, marginTop: 4 }}>
+                        {fmt(ncPool)} ETH remaining in pool
+                      </p>
+                      {!ncUnlocked && ncUnlockAt && (
+                        <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
+                          🔒 {fmtCountdown(ncUnlockAt)}
+                        </p>
+                      )}
+                      {ncUnlocked && (
+                        <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
+                          ✓ Unlock period passed — ready to withdraw
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      disabled={!ncUnlocked || Number(ncPool) === 0 || txPending === "withdrawNC"}
+                      onClick={() => sendTx("withdrawUnclaimedNationsCup", [], "withdrawNC")}
+                      style={{
+                        background: ncUnlocked && Number(ncPool) > 0
+                          ? "linear-gradient(135deg,#00ff88,#00cc6a)"
+                          : "rgba(255,255,255,0.05)",
+                        color: ncUnlocked && Number(ncPool) > 0 ? "#050810" : "#4a5568",
+                        border: "none", borderRadius: 12, padding: "10px 20px",
+                        fontWeight: 800, fontSize: 13,
+                        cursor: ncUnlocked && Number(ncPool) > 0 ? "pointer" : "not-allowed",
+                        display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+                      }}
+                    >
+                      {txPending === "withdrawNC" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                      {txPending === "withdrawNC" ? "Confirming…" : "Withdraw NC"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Top Scorer */}
+                {tsFinalized && (
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                    padding: "16px 20px", borderRadius: 14,
+                    background: tsUnlocked ? "rgba(124,58,237,0.06)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${tsUnlocked ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.08)"}`,
+                  }}>
+                    <div>
+                      <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>⚽ Top Scorer Unclaimed</p>
+                      <p style={{ color: "#a78bfa", fontWeight: 700, fontFamily: "monospace", fontSize: 15, marginTop: 4 }}>
+                        {fmt(scorerPool)} ETH remaining in pool
+                      </p>
+                      {!tsUnlocked && tsUnlockAt && (
+                        <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
+                          🔒 {fmtCountdown(tsUnlockAt)}
+                        </p>
+                      )}
+                      {tsUnlocked && (
+                        <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
+                          ✓ Unlock period passed — ready to withdraw
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      disabled={!tsUnlocked || Number(scorerPool) === 0 || txPending === "withdrawTS"}
+                      onClick={() => sendTx("withdrawUnclaimedTopScorer", [], "withdrawTS")}
+                      style={{
+                        background: tsUnlocked && Number(scorerPool) > 0
+                          ? "linear-gradient(135deg,#7c3aed,#6d28d9)"
+                          : "rgba(255,255,255,0.05)",
+                        color: tsUnlocked && Number(scorerPool) > 0 ? "#fff" : "#4a5568",
+                        border: "none", borderRadius: 12, padding: "10px 20px",
+                        fontWeight: 800, fontSize: 13,
+                        cursor: tsUnlocked && Number(scorerPool) > 0 ? "pointer" : "not-allowed",
+                        display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+                      }}
+                    >
+                      {txPending === "withdrawTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                      {txPending === "withdrawTS" ? "Confirming…" : "Withdraw TS"}
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Contract Config */}
         <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
