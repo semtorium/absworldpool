@@ -19,6 +19,13 @@ export function CountryCard({ country, isWinner, isEliminated, mintClosed, openS
 
   const nftImageSrc = `/nfts/${country.id}-${country.id}.png`;
 
+  // Hover → preload the modal NFT image so it's ready when user clicks
+  const handleMouseEnter = () => {
+    setHovered(true);
+    const img = new window.Image();
+    img.src = `/nfts/${country.id}.png`;
+  };
+
   return (
     <>
       {modalOpen && (
@@ -35,7 +42,7 @@ export function CountryCard({ country, isWinner, isEliminated, mintClosed, openS
       <div
         className="flag-card"
         onClick={() => setModalOpen(true)}
-        onMouseEnter={() => setHovered(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setHovered(false)}
         style={{
           cursor: "pointer",

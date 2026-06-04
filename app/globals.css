@@ -160,6 +160,12 @@
     100% { transform: scale(1);    opacity: 1; }
   }
 
+  /* NFT image skeleton shimmer */
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   /* Country card flag fill */
   .flag-card {
     position: relative;

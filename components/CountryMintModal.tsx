@@ -99,6 +99,7 @@ export function CountryMintModal({
   };
 
   const nftImageSrc = getNFTImage(country.id);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const accentColor = isWinner ? "#fbbf24" : isEliminated ? "#ef4444" : "#00ff88";
 
@@ -171,13 +172,27 @@ export function CountryMintModal({
               background: "#050810",
             }}
           >
+            {/* Skeleton shimmer — visible until image loads */}
+            {!imgLoaded && (
+              <div style={{
+                position: "absolute", inset: 0, zIndex: 1,
+                background: "linear-gradient(90deg, #0d1117 25%, #1a2235 50%, #0d1117 75%)",
+                backgroundSize: "200% 100%",
+                animation: "shimmer 1.4s infinite",
+              }} />
+            )}
             <Image
               src={nftImageSrc}
               alt={country.name}
               fill
               className="object-cover"
               unoptimized
-              style={{ opacity: isEliminated ? 0.45 : 1, filter: isEliminated ? "grayscale(0.7)" : "none" }}
+              onLoad={() => setImgLoaded(true)}
+              style={{
+                opacity: imgLoaded ? (isEliminated ? 0.45 : 1) : 0,
+                filter: isEliminated ? "grayscale(0.7)" : "none",
+                transition: "opacity 0.3s ease",
+              }}
             />
             {/* Gradient — right edge on desktop, bottom edge on mobile */}
             <div className="cmt-img-grad-desktop" style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 70%, #0a0e1a 100%)" }} />
