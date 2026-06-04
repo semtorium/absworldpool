@@ -164,21 +164,37 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {ownedCountries.map((country) => {
                   const balance = nftBalances ? Number(nftBalances[country.id - 1]) : 0;
+                  const openSeaUrl = `https://opensea.io/assets/abstract/${CONTRACT_ADDRESS}/${country.id}`;
                   return (
                     <div key={country.id}
-                      className="relative rounded-xl overflow-hidden"
-                      style={{ aspectRatio: "3/2", border: "1px solid rgba(0,255,136,0.2)" }}>
-                      <Image src={getFlagUrl(country.flagCode, 160)} alt={country.name}
-                        fill className="object-cover" unoptimized />
-                      <div className="absolute inset-0"
-                        style={{ background: "linear-gradient(to top, rgba(5,8,16,0.85) 0%, transparent 50%)" }} />
-                      <div className="absolute bottom-0 left-0 right-0 p-1.5">
-                        <p className="text-white text-[9px] font-bold truncate leading-tight">{country.name}</p>
-                        <p className="font-mono text-[10px] font-black" style={{ color: "#00ff88" }}>×{balance}</p>
+                      className="rounded-xl overflow-hidden flex flex-col"
+                      style={{ border: "1px solid rgba(0,255,136,0.2)" }}>
+                      {/* Flag image */}
+                      <div className="relative" style={{ aspectRatio: "3/2" }}>
+                        <Image src={getFlagUrl(country.flagCode, 160)} alt={country.name}
+                          fill className="object-cover" unoptimized />
+                        <div className="absolute inset-0"
+                          style={{ background: "linear-gradient(to top, rgba(5,8,16,0.85) 0%, transparent 50%)" }} />
+                        <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                          <p className="text-white text-[10px] font-bold truncate leading-tight">{country.name}</p>
+                          <p className="font-mono text-[11px] font-black" style={{ color: "#00ff88" }}>×{balance}</p>
+                        </div>
                       </div>
+                      {/* Trade button */}
+                      <a
+                        href={openSeaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1 py-1.5 text-[10px] font-bold transition-colors"
+                        style={{ background: "rgba(32,129,226,0.12)", color: "#60a5fa", borderTop: "1px solid rgba(0,255,136,0.1)" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(32,129,226,0.22)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(32,129,226,0.12)")}>
+                        <ExternalLink size={10} />
+                        Trade on OpenSea
+                      </a>
                     </div>
                   );
                 })}
