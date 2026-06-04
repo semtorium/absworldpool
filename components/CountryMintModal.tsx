@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
-import { Loader2, Minus, Plus, X, Trophy, Zap } from "lucide-react";
+import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
+import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
-import { getFlagUrl, type Country } from "@/lib/countries";
+import { type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { MintSuccessModal } from "./MintSuccessModal";
 import { useEthUsd } from "@/lib/useEthUsd";
@@ -28,6 +29,7 @@ export function CountryMintModal({
   country, isWinner, isEliminated, mintClosed, openSeaUrl, onClose,
 }: CountryMintModalProps) {
   const { address, isConnected } = useAccount();
+  const { login } = useLoginWithAbstract();
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const [amount, setAmount]           = useState(1);
@@ -185,13 +187,14 @@ export function CountryMintModal({
               src={nftImageSrc}
               alt={country.name}
               fill
-              className="object-cover"
+              className="object-contain"
               unoptimized
               onLoad={() => setImgLoaded(true)}
               style={{
                 opacity: imgLoaded ? (isEliminated ? 0.45 : 1) : 0,
                 filter: isEliminated ? "grayscale(0.7)" : "none",
                 transition: "opacity 0.3s ease",
+                padding: "8px",
               }}
             />
             {/* Gradient — right edge on desktop, bottom edge on mobile */}
@@ -390,14 +393,14 @@ export function CountryMintModal({
 
                 {/* Mint button */}
                 <button
-                  onClick={handleMint}
-                  disabled={!isConnected || isLoading || !hasEnoughEth}
+                  onClick={!isConnected ? login : handleMint}
+                  disabled={isLoading || (isConnected && !hasEnoughEth)}
                   className="btn-neon w-full flex items-center justify-center gap-2"
                   style={{
                     padding: "14px",
                     fontSize: 14,
                     fontWeight: 900,
-                    ...(!hasEnoughEth && isConnected ? {
+                    ...(isConnected && !hasEnoughEth ? {
                       opacity: 0.5, cursor: "not-allowed",
                       background: "rgba(255,60,60,0.12)",
                       border: "1px solid rgba(255,60,60,0.3)",
@@ -407,9 +410,9 @@ export function CountryMintModal({
                 >
                   {isLoading
                     ? <><Loader2 size={15} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
-                    : mintDone      ? t.card_minted
-                    : !isConnected  ? t.card_connect
-                    : !hasEnoughEth ? t.cmt_insufficient_eth
+                    : mintDone           ? t.card_minted
+                    : !isConnected       ? t.card_connect
+                    : !hasEnoughEth      ? t.cmt_insufficient_eth
                     : (
                       <span className="flex flex-col items-center leading-tight gap-0.5">
                         <span>{t.card_mint} · {formatEth(totalCost, 4)} ETH</span>
