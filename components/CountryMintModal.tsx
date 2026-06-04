@@ -126,10 +126,12 @@ export function CountryMintModal({
           backdropFilter: "blur(8px)",
           display: "flex", alignItems: "center", justifyContent: "center",
           padding: "16px",
+          overflowY: "auto",
         }}
       >
         {/* Modal */}
         <div
+          className="cmt-modal"
           style={{
             position: "relative",
             display: "flex",
@@ -163,6 +165,7 @@ export function CountryMintModal({
 
           {/* LEFT — NFT Image */}
           <div
+            className="cmt-img-panel"
             style={{
               position: "relative",
               width: "42%",
@@ -179,8 +182,9 @@ export function CountryMintModal({
               unoptimized
               style={{ opacity: isEliminated ? 0.45 : 1, filter: isEliminated ? "grayscale(0.7)" : "none" }}
             />
-            {/* Gradient right edge */}
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 70%, #0a0e1a 100%)" }} />
+            {/* Gradient — right edge on desktop, bottom edge on mobile */}
+            <div className="cmt-img-grad-desktop" style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 70%, #0a0e1a 100%)" }} />
+            <div className="cmt-img-grad-mobile" style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 55%, #0a0e1a 100%)", display: "none" }} />
             {/* Winner badge */}
             {isWinner && (
               <div style={{ position: "absolute", top: 14, left: 14 }}>
@@ -208,6 +212,7 @@ export function CountryMintModal({
 
           {/* RIGHT — Info + Mint */}
           <div
+            className="cmt-content"
             style={{
               flex: 1,
               overflowY: "auto",
@@ -404,6 +409,27 @@ export function CountryMintModal({
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 639px) {
+          .cmt-modal {
+            flex-direction: column !important;
+            max-height: 92vh;
+          }
+          .cmt-img-panel {
+            width: 100% !important;
+            min-width: unset !important;
+            height: 200px !important;
+            flex-shrink: 0;
+          }
+          .cmt-img-grad-desktop { display: none !important; }
+          .cmt-img-grad-mobile  { display: block !important; }
+          .cmt-content {
+            padding: 18px 16px 20px !important;
+            gap: 14px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
