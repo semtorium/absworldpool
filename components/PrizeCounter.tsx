@@ -2,9 +2,13 @@
 
 import { useReadContract } from "wagmi";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS } from "@/lib/config";
+import { CONTRACT_ADDRESS, TICKET_PRICE } from "@/lib/config";
 import { useLang } from "@/lib/LanguageContext";
 import { useEthUsd } from "@/lib/useEthUsd";
+
+const DEV_SHARE_BPS = 2000n;
+// Pool contribution per ticket = TICKET_PRICE * 80%
+const REFUND_PER_TICKET = (TICKET_PRICE * (10000n - DEV_SHARE_BPS)) / 10000n;
 
 interface PrizeCounterProps {
   activeTab?: string;
@@ -13,26 +17,46 @@ interface PrizeCounterProps {
 export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const { t } = useLang();
   const ethUsd = useEthUsd();
-  const isScorer   = activeTab === "scorer";
-  const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups";
+  const isScorer = activeTab === "scorer";
+  const isHidden = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups";
 
   const { data: ncPool } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: ABI,
+    address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "nationsCupPoolBalance",
     query: { refetchInterval: 5_000 },
   });
 
   const { data: tsPool } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: ABI,
+    address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "topScorerPoolBalance",
     query: { refetchInterval: 5_000 },
   });
 
+  const { data: tsFinalized } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "topScorerFinalized",
+    query: { refetchInterval: 30_000 },
+  });
+
+  const { data: totalUnusedTickets } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "totalUnusedTickets",
+    query: {
+      enabled: !!tsFinalized,  // only need this after TS finalization
+      refetchInterval: 30_000,
+    },
+  });
+
   if (isHidden) return null;
 
-  const pool     = isScorer ? (tsPool ?? 0n) : (ncPool ?? 0n);
+  // When TS is finalized, subtract refundable unused ticket amounts from displayed TS pool
+  const rawTsPool = tsPool ?? 0n;
+  const adjustedTsPool = tsFinalized && totalUnusedTickets
+    ? rawTsPool - BigInt(totalUnusedTickets) * REFUND_PER_TICKET
+    : rawTsPool;
+  const displayTsPool = adjustedTsPool < 0n ? 0n : adjustedTsPool;
+
+  const pool     = isScorer ? displayTsPool : (ncPool ?? 0n);
   const ethValue = Number(pool) / 1e18;
   const eth      = ethValue.toFixed(4);
   const [int, dec] = eth.split(".");
@@ -70,10 +94,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
           }}
         >
           <div className="live-dot" style={{ width: 7, height: 7, minWidth: 7 }} />
-          <span
-            className="font-black tracking-[0.25em] uppercase"
-            style={{ color: accent, fontSize: "15px" }}
-          >
+          <span className="font-black tracking-[0.25em] uppercase" style={{ color: accent, fontSize: "15px" }}>
             {label}
           </span>
         </div>
@@ -93,10 +114,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
 
         {/* USD equivalent */}
         {usd !== null && (
-          <p
-            className="mt-1 font-mono"
-            style={{ fontSize: "clamp(0.7rem,2vw,0.95rem)", color: `rgba(${accentRgb},0.38)` }}
-          >
+          <p className="mt-1 font-mono" style={{ fontSize: "clamp(0.7rem,2vw,0.95rem)", color: `rgba(${accentRgb},0.38)` }}>
             est. dollar value ≈ ${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </p>
         )}
