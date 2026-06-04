@@ -131,7 +131,7 @@ export function NationsCupPage() {
           ) : (
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#00ff88" }}>
-                TOURNAMENT STARTS IN
+                {t.nc_starts_in}
               </p>
               <div className="flex items-baseline justify-center gap-0.5 font-mono font-black text-white">
                 {countdown.lastHour ? (
@@ -213,10 +213,10 @@ export function NationsCupPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <span style={{ fontSize: "16px" }}>🔒</span>
               <span className="font-black tracking-widest uppercase text-sm" style={{ color: "#ef4444" }}>
-                MINT CLOSED
+                {t.nc_mint_closed_badge}
               </span>
               <span className="text-xs font-semibold" style={{ color: "rgba(239,68,68,0.55)" }}>
-                · Group stage ended · NFTs tradeable on OpenSea
+                · {t.nc_mint_closed_opensea}
               </span>
             </div>
           ) : (
@@ -227,11 +227,11 @@ export function NationsCupPage() {
                 <div className="flex items-center gap-2">
                   <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
                   <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
-                    🔥 LAST CHANCE TO MINT
+                    🔥 {t.nc_last_chance}
                   </span>
                 </div>
                 <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
-                  Minting closes when group stage ends · After that — OpenSea only
+                  {t.nc_last_chance_sub}
                 </span>
               </div>
 
@@ -283,7 +283,7 @@ export function NationsCupPage() {
           }`}
           style={filter === "YOURS" ? {} : { borderColor: "rgba(251,191,36,0.2)", color: "#fbbf24" }}>
           <span>⚽</span>
-          <span>My NFTs</span>
+          <span>{t.nc_filter_mine}</span>
           {ownedIds.size > 0 && (
             <span style={{
               background: filter === "YOURS" ? "rgba(0,255,136,0.25)" : "rgba(251,191,36,0.15)",
@@ -307,9 +307,9 @@ export function NationsCupPage() {
       ) : filter === "YOURS" && filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <span style={{ fontSize: "48px" }}>⚽</span>
-          <p className="font-bold text-white text-lg">No NFTs yet</p>
+          <p className="font-bold text-white text-lg">{t.nc_no_nfts}</p>
           <p className="text-sm" style={{ color: "#6b7a9a" }}>
-            {address ? "Mint a country NFT to support your nation!" : "Connect your wallet to see your NFTs"}
+            {address ? t.nc_no_nfts_sub : t.nc_connect_nfts}
           </p>
         </div>
       ) : (

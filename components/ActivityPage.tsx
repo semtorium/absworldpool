@@ -44,23 +44,31 @@ function relativeTime(blockNumber: bigint, latestBlock: bigint): string {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
-function kindIcon(kind: EventKind) {
-  if (kind === "mint")   return { emoji: "🏳️", color: "#00ff88", label: "MINT" };
-  if (kind === "ticket") return { emoji: "🎫", color: "#7c3aed", label: "TICKET" };
-  return                        { emoji: "⚽", color: "#fbbf24", label: "VOTE" };
+function kindMeta(kind: EventKind) {
+  if (kind === "mint")   return { emoji: "🏳️", color: "#00ff88" };
+  if (kind === "ticket") return { emoji: "🎫", color: "#7c3aed" };
+  return                        { emoji: "⚽", color: "#fbbf24" };
 }
 
 function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: bigint }) {
-  const { emoji, color, label } = kindIcon(item.kind);
+  const { t } = useLang();
+  const { emoji, color } = kindMeta(item.kind);
+  const label = item.kind === "mint" ? t.act_kind_mint : item.kind === "ticket" ? t.act_kind_ticket : t.act_kind_vote;
 
   let description: string;
   if (item.kind === "mint") {
     const country = COUNTRY_MAP[item.countryId!] ?? `#${item.countryId}`;
-    description = `minted ${item.amount} × ${country} NFT`;
+    description = t.act_desc_mint
+      .replace("{amount}", String(item.amount))
+      .replace("{country}", country);
   } else if (item.kind === "ticket") {
-    description = `bought ${item.quantity} Top Scorer ticket${Number(item.quantity) !== 1 ? "s" : ""}`;
+    const qty = Number(item.quantity);
+    const tmpl = qty === 1 ? t.act_desc_ticket_one : t.act_desc_ticket_many;
+    description = tmpl.replace("{qty}", String(qty));
   } else {
-    description = `voted ${item.votes}× for ${item.playerName}`;
+    description = t.act_desc_vote
+      .replace("{votes}", String(item.votes))
+      .replace("{player}", item.playerName ?? "");
   }
 
   return (
@@ -232,10 +240,10 @@ export function ActivityPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            📡 Activity
+            📡 {t.act_title}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "#6b7a9a" }}>
-            Live on-chain transactions · refreshes every 30s
+            {t.act_subtitle}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -247,7 +255,8 @@ export function ActivityPage() {
       {/* Legend */}
       <div className="flex gap-3 mb-4 flex-wrap">
         {(["mint", "ticket", "vote"] as EventKind[]).map(k => {
-          const { emoji, color, label } = kindIcon(k);
+          const { emoji, color } = kindMeta(k);
+          const label = k === "mint" ? t.act_kind_mint : k === "ticket" ? t.act_kind_ticket : t.act_kind_vote;
           return (
             <div key={k} className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#6b7a9a" }}>
               <span
@@ -267,13 +276,13 @@ export function ActivityPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 size={28} className="animate-spin" style={{ color: "#00ff88" }} />
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Fetching on-chain activity…</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.act_loading}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <p className="text-4xl">🏜️</p>
-            <p className="font-bold text-white">No activity yet</p>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Be the first to mint a country NFT!</p>
+            <p className="font-bold text-white">{t.act_empty}</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.act_empty_sub}</p>
           </div>
         ) : (
           items.map((item, i) => (

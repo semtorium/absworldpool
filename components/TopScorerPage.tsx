@@ -177,7 +177,7 @@ export function TopScorerPage() {
             {isConnected && unusedTickets > 0 && (
               <div className="ml-auto shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
                 style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
-                <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Unused</span>
+                <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>{t.ts_unused_label}</span>
                 <span className="font-black text-lg text-white">{unusedTickets}</span>
               </div>
             )}
@@ -213,7 +213,7 @@ export function TopScorerPage() {
                 className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
                 style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {(isBuying || isBuyConfirming) && <Loader2 size={16} className="animate-spin" />}
-                {!hasEnoughEth ? "Insufficient ETH" : (
+                {!hasEnoughEth ? t.ts_insufficient_eth : (
                   <span className="flex flex-col items-center leading-tight gap-0.5">
                     <span>{t.ts_buy_btn} · {formatEth(totalCost, 4)} ETH</span>
                     {ethUsd && (
@@ -226,7 +226,7 @@ export function TopScorerPage() {
               </button>
             ) : (
               <button onClick={() => login()} className="btn-neon w-full sm:w-auto flex items-center justify-center">
-                Connect Wallet
+                {t.connect}
               </button>
             )}
           </div>
@@ -249,9 +249,11 @@ export function TopScorerPage() {
             <span className="relative inline-flex rounded-full h-3 w-3"
               style={{ background: "#fbbf24" }} />
           </span>
-          <span>
-            You have <strong className="text-white">{unusedTickets}</strong> unused ticket{unusedTickets !== 1 ? "s" : ""}! Vote for a player below.
-          </span>
+          <span
+            dangerouslySetInnerHTML={{
+              __html: t.ts_unused_alert.replace("{n}", `<strong style="color:white">${unusedTickets}</strong>`),
+            }}
+          />
         </div>
       )}
 
@@ -283,7 +285,7 @@ export function TopScorerPage() {
               <Search size={13} style={{ color: "#6b7a9a", flexShrink: 0 }} />
               <input
                 type="text"
-                placeholder="Search player…"
+                placeholder={t.ts_search_placeholder}
                 value={searchQuery}
                 onChange={e => { setSearchQuery(e.target.value); setShowDropdown(true); }}
                 onFocus={() => setShowDropdown(true)}

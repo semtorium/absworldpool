@@ -4,6 +4,7 @@ import { useMemo, useEffect } from "react";
 import Image from "next/image";
 import { X, Zap } from "lucide-react";
 import { getFlagUrl } from "@/lib/countries";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Player {
   name: string;
@@ -26,6 +27,7 @@ const CONFETTI_COLORS = [
 ];
 
 export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, onVoteNow }: Props) {
+  const { t } = useLang();
   const pieces = useMemo(() =>
     Array.from({ length: 70 }, (_, i) => ({
       id: i,
@@ -96,8 +98,8 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
         {/* Header */}
         <div className="text-center mb-6">
           <div className="text-5xl mb-3">🎟️</div>
-          <h2 className="text-2xl font-black text-white">Tickets Purchased!</h2>
-          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>Ready to vote for your top scorer</p>
+          <h2 className="text-2xl font-black text-white">{t.tsm_title}</h2>
+          <p className="text-sm mt-1" style={{ color: "#6b7a9a" }}>{t.tsm_sub}</p>
         </div>
 
         {/* Stats */}
@@ -107,14 +109,14 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
             style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)" }}
           >
             <p className="text-2xl font-black text-white">+{ticketsBought}</p>
-            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#8b5cf6" }}>Tickets Bought</p>
+            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#8b5cf6" }}>{t.tsm_tickets_bought}</p>
           </div>
           <div
             className="rounded-xl p-3 text-center"
             style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.2)" }}
           >
             <p className="text-2xl font-black text-white">{unusedTotal}</p>
-            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#00ff88" }}>Votes Ready</p>
+            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#00ff88" }}>{t.tsm_votes_ready}</p>
           </div>
         </div>
 
@@ -125,7 +127,7 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
               className="text-xs font-black tracking-widest uppercase mb-2"
               style={{ color: "#6b7a9a" }}
             >
-              🔥 Top Favorites Right Now
+              🔥 {t.tsm_top_faves}
             </p>
             <div className="space-y-1.5">
               {top5.map((p, i) => (
@@ -171,7 +173,7 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
           style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)" }}
         >
           <Zap size={16} />
-          Vote Now →
+          {t.tsm_vote_now}
         </button>
       </div>
     </div>

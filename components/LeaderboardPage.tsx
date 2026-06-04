@@ -102,7 +102,7 @@ export function LeaderboardPage() {
             {t.lb_title}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "#6b7a9a" }}>
-            Score = NFTs minted + votes cast · refreshes every 30s
+            {t.lb_subtitle}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -129,25 +129,25 @@ export function LeaderboardPage() {
           {userEntry && (
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-center">
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#00ff88" }}>🌍 NFTs</p>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#00ff88" }}>🌍 {t.lb_mints}</p>
                 <p className="font-black text-white text-base">{userEntry.nfts}</p>
               </div>
               <div className="text-center">
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#8b5cf6" }}>⚽ Votes</p>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#8b5cf6" }}>⚽ {t.lb_votes}</p>
                 <p className="font-black text-white text-base">{userEntry.votes}</p>
               </div>
               <div
                 className="text-center px-3 py-1.5 rounded-xl"
                 style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)" }}
               >
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#fbbf24" }}>Score</p>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#fbbf24" }}>{t.lb_score}</p>
                 <p className="font-black text-white text-base">{userEntry.total}</p>
               </div>
             </div>
           )}
           {!loading && !userEntry && (
             <p className="text-xs" style={{ color: "#6b7a9a" }}>
-              Mint a country NFT or vote to appear here
+              {t.lb_no_activity}
             </p>
           )}
         </div>
@@ -156,7 +156,7 @@ export function LeaderboardPage() {
           <div className="flex items-center gap-2.5">
             <Medal size={18} style={{ color: "#6b7a9a" }} />
             <p className="text-sm" style={{ color: "#6b7a9a" }}>
-              Connect wallet to see your rank
+              {t.lb_connect_wallet}
             </p>
           </div>
           <button onClick={login} className="btn-neon text-xs px-4 py-2 shrink-0">
@@ -179,20 +179,20 @@ export function LeaderboardPage() {
           <span className="ml-auto flex items-center gap-4 text-[10px] font-bold tracking-widest uppercase">
             <span style={{ color: "#00ff88" }}>🌍 {t.lb_mints}</span>
             <span style={{ color: "#8b5cf6" }}>⚽ {t.lb_votes}</span>
-            <span style={{ color: "#fbbf24" }}>Score</span>
+            <span style={{ color: "#fbbf24" }}>{t.lb_score}</span>
           </span>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center py-20 gap-3">
             <Loader2 size={28} className="animate-spin" style={{ color: "#fbbf24" }} />
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Loading leaderboard…</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.lb_loading}</p>
           </div>
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center py-20 gap-3">
             <p className="text-4xl">🏜️</p>
-            <p className="font-bold text-white">No participants yet</p>
-            <p className="text-sm" style={{ color: "#6b7a9a" }}>Be the first to mint a country NFT!</p>
+            <p className="font-bold text-white">{t.lb_empty}</p>
+            <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.lb_empty_sub}</p>
           </div>
         ) : (
           entries.map((e, i) => {
@@ -267,7 +267,7 @@ export function LeaderboardPage() {
       {/* Footer note */}
       {!loading && entries.length > 0 && (
         <p className="text-center text-[11px]" style={{ color: "rgba(107,122,154,0.45)" }}>
-          Based on on-chain mint &amp; vote events · NFT transfers not tracked
+          {t.lb_footer}
         </p>
       )}
     </div>

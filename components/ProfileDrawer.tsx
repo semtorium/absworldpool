@@ -152,11 +152,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               style={{ background: "rgba(0,255,136,0.05)", border: "1px solid rgba(0,255,136,0.12)" }}>
               <div>
                 <p className="text-3xl font-black text-white">{Number(unusedTickets ?? 0n)}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>unused tickets</p>
+                <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>{t.pd_unused_tickets}</p>
               </div>
               {topScorerFinalized && finalTopScorer && (
                 <div className="text-right">
-                  <p className="text-xs font-semibold" style={{ color: "#fbbf24" }}>🏆 Winner</p>
+                  <p className="text-xs font-semibold" style={{ color: "#fbbf24" }}>🏆 {t.pd_winner}</p>
                   <p className="text-sm font-bold text-white">{finalTopScorer as string}</p>
                 </div>
               )}
@@ -165,7 +165,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             {/* Voted players */}
             {votedPlayers.length > 0 && (
               <div className="mt-3 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6b7a9a" }}>Your Votes</p>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6b7a9a" }}>{t.pd_your_votes}</p>
                 {votedPlayers.map(player => (
                   <div key={player.name}
                     className="flex items-center gap-3 p-2.5 rounded-xl"
@@ -177,7 +177,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                       <p className="text-xs" style={{ color: "#6b7a9a" }}>{player.country}</p>
                     </div>
                     <span className="font-mono text-sm font-bold" style={{ color: "#00ff88" }}>
-                      {player.votes} votes
+                      {player.votes} {t.pd_votes}
                     </span>
                     {topScorerFinalized && finalTopScorer === player.name && (
                       <span className="text-yellow-400 text-xs">🏆</span>
@@ -189,7 +189,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
             {votedPlayers.length === 0 && Number(unusedTickets ?? 0n) === 0 && (
               <p className="text-xs mt-2 text-center py-3" style={{ color: "#6b7a9a" }}>
-                No tickets yet · Go to Top Scorer tab
+                {t.pd_no_tickets}
               </p>
             )}
           </div>
@@ -198,7 +198,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-base">🌍</span>
-              <h3 className="font-bold text-white text-sm uppercase tracking-wide">My Country NFTs</h3>
+              <h3 className="font-bold text-white text-sm uppercase tracking-wide">{t.pd_my_nfts}</h3>
               {ownedCountries.length > 0 && (
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold ml-auto"
                   style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88" }}>
@@ -211,9 +211,9 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <div className="rounded-2xl p-6 text-center"
                 style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
                 <p className="text-3xl mb-2">🏳️</p>
-                <p className="text-sm font-semibold text-white">No NFTs yet</p>
+                <p className="text-sm font-semibold text-white">{t.pd_no_nfts}</p>
                 <p className="text-xs mt-1" style={{ color: "#6b7a9a" }}>
-                  Mint a country NFT to support your team
+                  {t.pd_no_nfts_sub}
                 </p>
               </div>
             ) : (
@@ -247,7 +247,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#f0f4ff"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#6b7a9a"; }}>
             <ExternalLink size={14} />
-            View on Explorer
+            {t.pd_view_explorer}
           </a>
         </div>
 

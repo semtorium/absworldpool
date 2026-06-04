@@ -228,14 +228,14 @@ export function CountryMintModal({
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#6b7a9a", letterSpacing: "0.15em", textTransform: "uppercase" }}>
-                  Group {country.group} · {country.continent}
+                  {country.group} · {country.continent}
                 </span>
               </div>
               <h2 className="font-black text-white" style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", lineHeight: 1.1 }}>
                 {country.name}
               </h2>
               <p style={{ fontSize: 12, color: "#6b7a9a", marginTop: 4 }}>
-                2026 FIFA World Cup NFT
+                {t.cmt_wc_nft}
               </p>
             </div>
 
@@ -247,7 +247,7 @@ export function CountryMintModal({
                 border: "1px solid rgba(255,255,255,0.06)",
               }}>
                 <p style={{ fontSize: 10, color: "#6b7a9a", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
-                  Total Minted
+                  {t.cmt_total_minted}
                 </p>
                 <p className="font-black font-mono text-white" style={{ fontSize: 22 }}>
                   {totalSupply !== undefined ? totalSupply.toString() : "—"}
@@ -259,7 +259,7 @@ export function CountryMintModal({
                 border: `1px solid ${address ? "rgba(0,255,136,0.12)" : "rgba(255,255,255,0.06)"}`,
               }}>
                 <p style={{ fontSize: 10, color: "#6b7a9a", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
-                  You Hold
+                  {t.cmt_you_hold}
                 </p>
                 <p className="font-black font-mono" style={{ fontSize: 22, color: address ? "#00ff88" : "rgba(255,255,255,0.3)" }}>
                   {address ? (userBalance !== undefined ? userBalance.toString() : "—") : "—"}
@@ -296,15 +296,15 @@ export function CountryMintModal({
                 background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
               }}>
                 <p style={{ color: "#ef4444", fontWeight: 800, fontSize: 14 }}>✕ {t.card_eliminated}</p>
-                <p style={{ color: "rgba(239,68,68,0.6)", fontSize: 12, marginTop: 4 }}>This country has been eliminated</p>
+                <p style={{ color: "rgba(239,68,68,0.6)", fontSize: 12, marginTop: 4 }}>{t.cmt_eliminated_sub}</p>
               </div>
             ) : isWinner ? (
               <div style={{
                 padding: "14px", borderRadius: 12, textAlign: "center",
                 background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.25)",
               }}>
-                <p style={{ color: "#fbbf24", fontWeight: 800, fontSize: 14 }}>🏆 World Cup Champion!</p>
-                <p style={{ color: "rgba(251,191,36,0.6)", fontSize: 12, marginTop: 4 }}>Claim your rewards on the Nations Cup tab</p>
+                <p style={{ color: "#fbbf24", fontWeight: 800, fontSize: 14 }}>🏆 {t.cmt_champion_title}</p>
+                <p style={{ color: "rgba(251,191,36,0.6)", fontSize: 12, marginTop: 4 }}>{t.cmt_champion_sub}</p>
               </div>
             ) : mintClosed ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -312,8 +312,8 @@ export function CountryMintModal({
                   padding: "12px 14px", borderRadius: 12, textAlign: "center",
                   background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
                 }}>
-                  <p style={{ color: "#ef4444", fontWeight: 800, fontSize: 13 }}>🔒 Minting Closed</p>
-                  <p style={{ color: "rgba(239,68,68,0.55)", fontSize: 11, marginTop: 3 }}>Group stage has ended</p>
+                  <p style={{ color: "#ef4444", fontWeight: 800, fontSize: 13 }}>🔒 {t.cmt_mint_closed}</p>
+                  <p style={{ color: "rgba(239,68,68,0.55)", fontSize: 11, marginTop: 3 }}>{t.cmt_mint_closed_sub}</p>
                 </div>
                 <a
                   href={openSeaUrl ?? "#"}
@@ -326,7 +326,7 @@ export function CountryMintModal({
                     color: "#4fa3f7", fontWeight: 800, fontSize: 13,
                   }}
                 >
-                  🌊 Trade on OpenSea
+                  🌊 {t.cmt_opensea}
                 </a>
               </div>
             ) : (
@@ -334,7 +334,7 @@ export function CountryMintModal({
                 {/* Quantity selector */}
                 <div>
                   <p style={{ fontSize: 11, color: "#6b7a9a", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
-                    Quantity
+                    {t.cmt_quantity}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <button
@@ -372,7 +372,7 @@ export function CountryMintModal({
                   padding: "10px 14px", borderRadius: 10,
                   background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
                 }}>
-                  <span style={{ fontSize: 12, color: "#6b7a9a", fontWeight: 600 }}>Total cost</span>
+                  <span style={{ fontSize: 12, color: "#6b7a9a", fontWeight: 600 }}>{t.cmt_total_cost}</span>
                   <span className="font-black font-mono text-white" style={{ fontSize: 16 }}>
                     {formatEth(totalCost, 4)} ETH
                   </span>
@@ -399,7 +399,7 @@ export function CountryMintModal({
                     ? <><Loader2 size={15} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
                     : mintDone      ? t.card_minted
                     : !isConnected  ? t.card_connect
-                    : !hasEnoughEth ? "Insufficient ETH"
+                    : !hasEnoughEth ? t.cmt_insufficient_eth
                     : (
                       <span className="flex flex-col items-center leading-tight gap-0.5">
                         <span>{t.card_mint} · {formatEth(totalCost, 4)} ETH</span>
@@ -413,7 +413,7 @@ export function CountryMintModal({
                 </button>
 
                 <p style={{ fontSize: 11, color: "rgba(107,122,154,0.6)", textAlign: "center" }}>
-                  0.0022 ETH per NFT · Abstract Chain
+                  {t.cmt_price_note}
                 </p>
               </div>
             )}
