@@ -364,6 +364,55 @@ export default function AdminPage() {
           <Stat label="Eliminated"        value={`${elimStatus.filter(Boolean).length} / 48`} color="#6b7a9a" />
         </div>
 
+        {/* Mint Control */}
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isPaused ? "rgba(239,68,68,0.4)" : "rgba(0,255,136,0.3)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🎟️ Mint Kontrolü</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+            Mint kapatılınca yeni NFT basılamaz. Mevcut NFT'ler trade edilmeye devam eder.
+          </p>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+            padding: "20px 24px", borderRadius: 14,
+            background: isPaused ? "rgba(239,68,68,0.07)" : "rgba(0,255,136,0.05)",
+            border: `1px solid ${isPaused ? "rgba(239,68,68,0.35)" : "rgba(0,255,136,0.25)"}`,
+          }}>
+            <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 16 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+                background: isPaused ? "rgba(239,68,68,0.12)" : "rgba(0,255,136,0.1)",
+              }}>
+                {isPaused ? "🔒" : "🟢"}
+              </div>
+              <div>
+                <p style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>
+                  {isPaused ? "Mint KAPALI" : "Mint AÇIK"}
+                </p>
+                <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
+                  {isPaused
+                    ? "Kullanıcılar NFT mint edemiyor · Trade serbest"
+                    : "Kullanıcılar serbestçe NFT mint edebilir"}
+                </p>
+              </div>
+            </div>
+            <button
+              disabled={txPending === "mintToggle"}
+              onClick={() => sendTx("setPaused", [!isPaused], "mintToggle")}
+              style={{
+                background: isPaused
+                  ? "linear-gradient(135deg,#00ff88,#00cc6a)"
+                  : "linear-gradient(135deg,#ef4444,#dc2626)",
+                color: isPaused ? "#050810" : "#fff",
+                border: "none", borderRadius: 12, padding: "12px 24px",
+                fontWeight: 900, fontSize: 14, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+              }}>
+              {txPending === "mintToggle" && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
+              {txPending === "mintToggle" ? "Bekleniyor…" : isPaused ? "✓ Minti Aç" : "🔒 Minti Kapat"}
+            </button>
+          </div>
+        </div>
+
         {/* Active Countries */}
         <div style={{ ...sectionStyle, marginBottom: 24 }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 16 }}>⚽ Active Countries ({activeCountries.length})</h2>
@@ -615,7 +664,7 @@ export default function AdminPage() {
         {/* Contract Config */}
         <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚙️ Contract Config</h2>
-          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Emergency controls and parameter adjustments.</p>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>Acil durum kontrolleri. Mint açma/kapama için yukarıdaki <strong style={{ color: "#f0f4ff" }}>Mint Kontrolü</strong> bölümünü kullan.</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
