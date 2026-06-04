@@ -7,6 +7,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap, Search } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, TICKET_PRICE, TOP_SCORER_PLAYERS, formatEth } from "@/lib/config";
+
+const TS_CLAIMED_KEY = (addr: string) => `ts_claimed_${CONTRACT_ADDRESS}_${addr}`;
 import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
@@ -75,12 +77,12 @@ export function TopScorerPage() {
   // Persist claimed state to localStorage so "✓ Claimed" survives navigation
   useEffect(() => {
     if (isClaimTxSuccess && address) {
-      localStorage.setItem(`ts_claimed_${address.toLowerCase()}`, "true");
+      localStorage.setItem(TS_CLAIMED_KEY(address.toLowerCase()), "true");
     }
   }, [isClaimTxSuccess, address]);
 
   const isClaimSuccess = isClaimTxSuccess ||
-    (!!address && localStorage.getItem(`ts_claimed_${address.toLowerCase()}`) === "true");
+    (!!address && localStorage.getItem(TS_CLAIMED_KEY(address.toLowerCase())) === "true");
 
   // Show modal + refetch after buy
   useEffect(() => {

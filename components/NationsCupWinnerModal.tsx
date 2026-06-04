@@ -6,6 +6,8 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { Trophy, Loader2 } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
+
+const NC_CLAIMED_KEY = (addr: string) => `nc_claimed_${CONTRACT_ADDRESS}_${addr}`;
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -57,7 +59,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
 
   useEffect(() => {
     if (isSuccess && address) {
-      localStorage.setItem(`nc_claimed_${address.toLowerCase()}`, "true");
+      localStorage.setItem(NC_CLAIMED_KEY(address.toLowerCase()), "true");
       onClaimed();
     }
   }, [isSuccess, address, onClaimed]);
@@ -218,7 +220,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
           onClick={() => {
             // Non-winners can't claim → mark as dismissed so modal doesn't reappear every refresh
             if (!canClaim && address) {
-              localStorage.setItem(`nc_claimed_${address.toLowerCase()}`, "true");
+              localStorage.setItem(NC_CLAIMED_KEY(address.toLowerCase()), "true");
             }
             onClose();
           }}

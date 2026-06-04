@@ -19,8 +19,10 @@ import { EliminationSummaryModal }       from "@/components/EliminationSummaryMo
 import { ABI }                           from "@/lib/abi";
 import { CONTRACT_ADDRESS }              from "@/lib/config";
 
-// Namespace snapshot by contract address so redeployments reset it automatically
+// Namespace all localStorage keys by contract address so redeployments reset them automatically
 const ELIM_SNAPSHOT_KEY = `abs_elim_snapshot_${CONTRACT_ADDRESS}`;
+const NC_CLAIMED_KEY    = (addr: string) => `nc_claimed_${CONTRACT_ADDRESS}_${addr}`;
+const TS_CLAIMED_KEY    = (addr: string) => `ts_claimed_${CONTRACT_ADDRESS}_${addr}`;
 
 const STORAGE_KEY = "abs_active_tab";
 
@@ -38,11 +40,11 @@ export default function Home() {
   // Render-time claimed checks — re-evaluates when address loads (fixes modal reappearing after claim)
   const isNcClaimed = useMemo(() => {
     const addr = address?.toLowerCase() ?? "";
-    return addr ? localStorage.getItem(`nc_claimed_${addr}`) === "true" : false;
+    return addr ? localStorage.getItem(NC_CLAIMED_KEY(addr)) === "true" : false;
   }, [address]);
   const isTsClaimed = useMemo(() => {
     const addr = address?.toLowerCase() ?? "";
-    return addr ? localStorage.getItem(`ts_claimed_${addr}`) === "true" : false;
+    return addr ? localStorage.getItem(TS_CLAIMED_KEY(addr)) === "true" : false;
   }, [address]);
 
   // Keep address accessible inside effects without adding it as a dependency
@@ -80,8 +82,8 @@ export default function Home() {
 
     modalInitRef.current = true;
     const addr = addressRef.current?.toLowerCase() ?? "";
-    const ncClaimed = addr ? localStorage.getItem(`nc_claimed_${addr}`) === "true" : false;
-    const tsClaimed = addr ? localStorage.getItem(`ts_claimed_${addr}`) === "true" : false;
+    const ncClaimed = addr ? localStorage.getItem(NC_CLAIMED_KEY(addr)) === "true" : false;
+    const tsClaimed = addr ? localStorage.getItem(TS_CLAIMED_KEY(addr)) === "true" : false;
 
     if (ncFinalized && !ncClaimed) {
       setShowNcWinner(true);
@@ -113,7 +115,7 @@ export default function Home() {
   const handleNcClose = useCallback(() => {
     setShowNcWinner(false);
     const addr = address?.toLowerCase() ?? "";
-    const tsClaimed = addr && localStorage.getItem(`ts_claimed_${addr}`) === "true";
+    const tsClaimed = addr && localStorage.getItem(TS_CLAIMED_KEY(addr)) === "true";
     if (tsFinalized && !tsClaimed) {
       setShowTsWinner(true);
     }

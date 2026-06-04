@@ -396,11 +396,13 @@ async function main() {
   console.log(``);
 
   const claimedTotal = Number(ncClaimedTotal + tsClaimedTotal) / 1e18;
-  // Dev takes 5% settlement fee from each claim — must be included in the balance check
-  const ncSettlementFee = ncFinalized ? Number(finalNcPool) * 0.05 / 1e18 : 0;
-  const tsSettlementFee = tsFinalized ? Number(finalTsPool) * 0.05 / 1e18 : 0;
+  // Dev takes 5% settlement fee from each claim.
+  // NationsCupClaimed / TopScorerClaimed events emit userReward = 95% of entitlement.
+  // So settlement fee actually paid = claimedRewards * 5/95 (only for claims that happened).
+  const ncSettlementFee = Number(ncClaimedTotal) / 1e18 * (5 / 95);
+  const tsSettlementFee = Number(tsClaimedTotal) / 1e18 * (5 / 95);
   const totalSettlement = ncSettlementFee + tsSettlementFee;
-  console.log(`  Dev settlement fee (5% of finalized pools): ${totalSettlement.toFixed(6)} ETH`);
+  console.log(`  Dev settlement fee (5/95 of claimed rewards): ${totalSettlement.toFixed(6)} ETH`);
   const poolPlusClaims = actualPoolAfterClaims + claimedTotal + totalSettlement;
   const poolMatchOk = Math.abs(poolPlusClaims - expectedTotalPool) < 0.0001;
   console.log(`  ${poolMatchOk ? "✅" : "❌"} pool + claims + settlement ≈ expected total pool (${poolMatchOk ? "MATCH" : "MISMATCH: delta " + (poolPlusClaims - expectedTotalPool).toFixed(6) + " ETH"})`);

@@ -6,6 +6,8 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { Zap, Loader2 } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, TOP_SCORER_PLAYERS } from "@/lib/config";
+
+const TS_CLAIMED_KEY = (addr: string) => `ts_claimed_${CONTRACT_ADDRESS}_${addr}`;
 import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -57,7 +59,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
 
   useEffect(() => {
     if (isSuccess && address) {
-      localStorage.setItem(`ts_claimed_${address.toLowerCase()}`, "true");
+      localStorage.setItem(TS_CLAIMED_KEY(address.toLowerCase()), "true");
       onClaimed();
     }
   }, [isSuccess, address, onClaimed]);
@@ -230,7 +232,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
           onClick={() => {
             // Non-winners can't claim → mark as dismissed so modal doesn't reappear every refresh
             if (!canClaim && address) {
-              localStorage.setItem(`ts_claimed_${address.toLowerCase()}`, "true");
+              localStorage.setItem(TS_CLAIMED_KEY(address.toLowerCase()), "true");
             }
             onClose();
           }}
