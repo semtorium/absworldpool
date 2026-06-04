@@ -1,10 +1,10 @@
 "use client";
 
 import { useReadContract } from "wagmi";
-import { useEffect, useState } from "react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useLang } from "@/lib/LanguageContext";
+import { useEthUsd } from "@/lib/useEthUsd";
 
 interface PrizeCounterProps {
   activeTab?: string;
@@ -12,9 +12,9 @@ interface PrizeCounterProps {
 
 export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const { t } = useLang();
-  const [ethUsd, setEthUsd] = useState<number | null>(null);
+  const ethUsd = useEthUsd();
   const isScorer   = activeTab === "scorer";
-  const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups" || activeTab === "faq";
+  const isHidden   = activeTab === "leaderboard" || activeTab === "activity" || activeTab === "groups";
 
   const { data: ncPool } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -29,22 +29,6 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
     functionName: "topScorerPoolBalance",
     query: { refetchInterval: 5_000 },
   });
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
-          { cache: "no-store" }
-        );
-        const json = await res.json();
-        if (json?.ethereum?.usd) setEthUsd(json.ethereum.usd);
-      } catch { /* silent */ }
-    };
-    fetchPrice();
-    const id = setInterval(fetchPrice, 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   if (isHidden) return null;
 

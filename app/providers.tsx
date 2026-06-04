@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { AbstractWalletProvider } from "@abstract-foundation/agw-react";
 import { abstractTestnet } from "viem/chains";
 import { LanguageProvider } from "@/lib/LanguageContext";
+import { EthUsdProvider } from "@/lib/EthUsdContext";
 import { useState } from "react";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -17,7 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <LanguageProvider>
-            {children}
+            <EthUsdProvider>
+              {children}
+            </EthUsdProvider>
           </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
