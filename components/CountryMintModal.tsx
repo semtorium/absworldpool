@@ -21,10 +21,7 @@ interface CountryMintModalProps {
 }
 
 function getNFTImage(id: number): string {
-  // Temporary: Brazil has test image. Others use flag.
-  // After IPFS setup, replace with: `ipfs://QmXXX/${id}.png`
-  if (id === 9) return "/nft-test.jpg";
-  return getFlagUrl("", 320); // fallback — overridden below
+  return `/nfts/${id}.png`;
 }
 
 export function CountryMintModal({
@@ -101,9 +98,7 @@ export function CountryMintModal({
     });
   };
 
-  const nftImageSrc = country.id === 9
-    ? "/nft-test.jpg"
-    : getFlagUrl(country.flagCode, 320);
+  const nftImageSrc = getNFTImage(country.id);
 
   const accentColor = isWinner ? "#fbbf24" : isEliminated ? "#ef4444" : "#00ff88";
 

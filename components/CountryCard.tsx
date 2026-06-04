@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { getFlagUrl, type Country } from "@/lib/countries";
+import { type Country } from "@/lib/countries";
 import { CountryMintModal } from "./CountryMintModal";
 
 interface CountryCardProps {
@@ -17,9 +17,7 @@ export function CountryCard({ country, isWinner, isEliminated, mintClosed, openS
   const [hovered, setHovered]   = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const nftImageSrc = country.id === 9
-    ? "/nft-test.jpg"
-    : getFlagUrl(country.flagCode, 320);
+  const nftImageSrc = `/nfts/${country.id}-${country.id}.png`;
 
   return (
     <>
