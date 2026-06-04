@@ -751,8 +751,6 @@ export default function AdminPage() {
             return `${d}d ${h}h ${m}m remaining`;
           };
 
-          if (!ncFinalized && !tsFinalized) return null; // nothing finalized yet, hide section
-
           return (
             <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(0,255,136,0.15)" }}>
               <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>💰 Withdraw Unclaimed Pools</h2>
@@ -763,7 +761,7 @@ export default function AdminPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
                 {/* Nations Cup */}
-                {ncFinalized && (
+                {true && (
                   <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                     padding: "16px 20px", borderRadius: 14,
@@ -775,12 +773,17 @@ export default function AdminPage() {
                       <p style={{ color: "#fbbf24", fontWeight: 700, fontFamily: "monospace", fontSize: 15, marginTop: 4 }}>
                         {fmt(ncPool)} ETH remaining in pool
                       </p>
-                      {!ncUnlocked && ncUnlockAt && (
+                      {!ncFinalized && (
+                        <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
+                          ⏳ Not finalized yet — countdown starts after finalization
+                        </p>
+                      )}
+                      {ncFinalized && !ncUnlocked && ncUnlockAt && (
                         <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
                           🔒 {fmtCountdown(ncUnlockAt)}
                         </p>
                       )}
-                      {ncUnlocked && (
+                      {ncFinalized && ncUnlocked && (
                         <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
                           ✓ Unlock period passed — ready to withdraw
                         </p>
@@ -807,7 +810,7 @@ export default function AdminPage() {
                 )}
 
                 {/* Top Scorer */}
-                {tsFinalized && (
+                {true && (
                   <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                     padding: "16px 20px", borderRadius: 14,
@@ -819,12 +822,17 @@ export default function AdminPage() {
                       <p style={{ color: "#a78bfa", fontWeight: 700, fontFamily: "monospace", fontSize: 15, marginTop: 4 }}>
                         {fmt(scorerPool)} ETH remaining in pool
                       </p>
-                      {!tsUnlocked && tsUnlockAt && (
+                      {!tsFinalized && (
+                        <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
+                          ⏳ Not finalized yet — countdown starts after finalization
+                        </p>
+                      )}
+                      {tsFinalized && !tsUnlocked && tsUnlockAt && (
                         <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 4 }}>
                           🔒 {fmtCountdown(tsUnlockAt)}
                         </p>
                       )}
-                      {tsUnlocked && (
+                      {tsFinalized && tsUnlocked && (
                         <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
                           ✓ Unlock period passed — ready to withdraw
                         </p>
