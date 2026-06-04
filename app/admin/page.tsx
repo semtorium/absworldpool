@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [tsFinalized,    setTsFinalized]    = useState(false);
   const [winningId,      setWinningId]      = useState<bigint>(0n);
   const [finalScorer,    setFinalScorer]    = useState("");
+  const [isMintClosed,   setIsMintClosed]   = useState(false);
   const [isPaused,       setIsPaused]       = useState(false);
   const [isMaintenance,  setIsMaintenance]  = useState(false);
   const [elimStatus,     setElimStatus]     = useState<boolean[]>([]);
@@ -94,7 +95,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, paused, maint, elim] = await Promise.all([
+      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, paused, maint, elim] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
@@ -104,6 +105,7 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "owner" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "mintClosed" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "maintenanceMode" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus" }),
@@ -118,6 +120,7 @@ export default function AdminPage() {
       setWinningId(wId as bigint);
       setFinalScorer(fs as string);
       setOwnerAddress((owner as string).toLowerCase() as Address);
+      setIsMintClosed(mintClosed as boolean);
       setIsPaused(paused as boolean);
       setIsMaintenance(maint as boolean);
       setElimStatus(Array.from(elim as unknown as boolean[]));
@@ -359,56 +362,57 @@ export default function AdminPage() {
           <Stat label="Total Volume"      value={`${fmt(totalVol)} ETH`}   color="#00ff88" />
           <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#00ff88" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
           <Stat label="Top Scorer"        value={tsFinalized ? "✓ Finalized" : "Active"} color={tsFinalized ? "#00ff88" : "#fbbf24"} sub={tsFinalized ? finalScorer : undefined} />
+          <Stat label="Mint Status"        value={isMintClosed ? "🔒 CLOSED" : "🟢 OPEN"} color={isMintClosed ? "#ef4444" : "#00ff88"} />
           <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#00ff88"} />
           <Stat label="Site Maintenance"  value={isMaintenance ? "🔧 ON" : "✓ OFF"} color={isMaintenance ? "#fbbf24" : "#00ff88"} />
           <Stat label="Eliminated"        value={`${elimStatus.filter(Boolean).length} / 48`} color="#6b7a9a" />
         </div>
 
         {/* Mint Control */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isPaused ? "rgba(239,68,68,0.4)" : "rgba(0,255,136,0.3)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isMintClosed ? "rgba(239,68,68,0.4)" : "rgba(0,255,136,0.3)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🎟️ Mint Control</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
-            Closing mint prevents new NFTs from being minted. Existing NFTs remain tradeable.
+            Closing mint prevents new NFTs from being minted. Ticket purchases and votes remain open.
           </p>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
             padding: "20px 24px", borderRadius: 14,
-            background: isPaused ? "rgba(239,68,68,0.07)" : "rgba(0,255,136,0.05)",
-            border: `1px solid ${isPaused ? "rgba(239,68,68,0.35)" : "rgba(0,255,136,0.25)"}`,
+            background: isMintClosed ? "rgba(239,68,68,0.07)" : "rgba(0,255,136,0.05)",
+            border: `1px solid ${isMintClosed ? "rgba(239,68,68,0.35)" : "rgba(0,255,136,0.25)"}`,
           }}>
             <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 16 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
-                background: isPaused ? "rgba(239,68,68,0.12)" : "rgba(0,255,136,0.1)",
+                background: isMintClosed ? "rgba(239,68,68,0.12)" : "rgba(0,255,136,0.1)",
               }}>
-                {isPaused ? "🔒" : "🟢"}
+                {isMintClosed ? "🔒" : "🟢"}
               </div>
               <div>
                 <p style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>
-                  {isPaused ? "Mint CLOSED" : "Mint OPEN"}
+                  {isMintClosed ? "Mint CLOSED" : "Mint OPEN"}
                 </p>
                 <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 3 }}>
-                  {isPaused
-                    ? "Users cannot mint NFTs · Trading remains open"
+                  {isMintClosed
+                    ? "Users cannot mint NFTs · Tickets & votes remain open · Trading open"
                     : "Users can freely mint country NFTs"}
                 </p>
               </div>
             </div>
             <button
               disabled={txPending === "mintToggle"}
-              onClick={() => sendTx("setPaused", [!isPaused], "mintToggle")}
+              onClick={() => sendTx("setMintClosed", [!isMintClosed], "mintToggle")}
               style={{
-                background: isPaused
+                background: isMintClosed
                   ? "linear-gradient(135deg,#00ff88,#00cc6a)"
                   : "linear-gradient(135deg,#ef4444,#dc2626)",
-                color: isPaused ? "#050810" : "#fff",
+                color: isMintClosed ? "#050810" : "#fff",
                 border: "none", borderRadius: 12, padding: "12px 24px",
                 fontWeight: 900, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
               }}>
               {txPending === "mintToggle" && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
-              {txPending === "mintToggle" ? "Confirming…" : isPaused ? "✓ Open Mint" : "🔒 Close Mint"}
+              {txPending === "mintToggle" ? "Confirming…" : isMintClosed ? "✓ Open Mint" : "🔒 Close Mint"}
             </button>
           </div>
         </div>

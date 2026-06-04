@@ -68,10 +68,11 @@ export function NationsCupPage() {
   const { data: tournamentFinalized, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
   const { data: winningCountryId }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
   const { data: eliminationStatus }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
+  const { data: contractMintClosed }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "mintClosed", query: { refetchInterval: 30_000 } });
   const { data: contractPaused }         = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" });
 
-  // Mint is "closed" when contract is paused OR tournament is finalized OR group stage deadline passed
-  const mintClosed = !!contractPaused || !!tournamentFinalized || mintDeadline.expired;
+  // Mint is "closed" when mintClosed flag set OR emergency paused OR tournament finalized OR deadline passed
+  const mintClosed = !!contractMintClosed || !!contractPaused || !!tournamentFinalized || mintDeadline.expired;
   const { data: userBalance }         = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOf",
     args: address && winningCountryId ? [address, winningCountryId] : undefined,

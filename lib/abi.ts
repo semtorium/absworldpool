@@ -2,6 +2,7 @@ export const ABI = [
   // ── View: core state ─────────────────────────────────────────
   { type: "function", name: "owner",                 inputs: [], outputs: [{ type: "address" }],  stateMutability: "view" },
   { type: "function", name: "devWallet",             inputs: [], outputs: [{ type: "address" }],  stateMutability: "view" },
+  { type: "function", name: "mintClosed",             inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "paused",                inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "maintenanceMode",       inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "MINT_PRICE",            inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
@@ -44,6 +45,7 @@ export const ABI = [
   { type: "function", name: "claimTopScorerRewards",  inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "refundUnusedTickets",    inputs: [], outputs: [], stateMutability: "nonpayable" },
   // ── Write: onlyOwner ─────────────────────────────────────────
+  { type: "function", name: "setMintClosed",        inputs: [{ name: "_mintClosed", type: "bool" }],    outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setPaused",           inputs: [{ name: "_paused", type: "bool" }],        outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setMaintenanceMode",  inputs: [{ name: "_maintenance", type: "bool" }],   outputs: [], stateMutability: "nonpayable" },
   {
