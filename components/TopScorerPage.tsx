@@ -11,11 +11,13 @@ import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 import { TicketSuccessModal } from "@/components/TicketSuccessModal";
+import { useEthUsd } from "@/lib/useEthUsd";
 
 export function TopScorerPage() {
   const { address, isConnected } = useAccount();
   const { login } = useLoginWithAbstract();
   const { t } = useLang();
+  const ethUsd = useEthUsd();
   const queryClient = useQueryClient();
 
   const [ticketQty, setTicketQty]     = useState(1);
@@ -211,7 +213,16 @@ export function TopScorerPage() {
                 className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
                 style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {(isBuying || isBuyConfirming) && <Loader2 size={16} className="animate-spin" />}
-                {!hasEnoughEth ? "Insufficient ETH" : `${t.ts_buy_btn} · ${formatEth(totalCost, 4)} ETH`}
+                {!hasEnoughEth ? "Insufficient ETH" : (
+                  <span className="flex flex-col items-center leading-tight gap-0.5">
+                    <span>{t.ts_buy_btn} · {formatEth(totalCost, 4)} ETH</span>
+                    {ethUsd && (
+                      <span style={{ fontSize: 11, opacity: 0.55, fontWeight: 600 }}>
+                        ≈ ${(Number(totalCost) / 1e18 * ethUsd).toFixed(2)}
+                      </span>
+                    )}
+                  </span>
+                )}
               </button>
             ) : (
               <button onClick={() => login()} className="btn-neon w-full sm:w-auto flex items-center justify-center">

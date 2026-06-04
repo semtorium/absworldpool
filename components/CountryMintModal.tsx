@@ -9,6 +9,7 @@ import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
 import { getFlagUrl, type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { MintSuccessModal } from "./MintSuccessModal";
+import { useEthUsd } from "@/lib/useEthUsd";
 
 interface CountryMintModalProps {
   country: Country;
@@ -31,6 +32,7 @@ export function CountryMintModal({
 }: CountryMintModalProps) {
   const { address, isConnected } = useAccount();
   const { t } = useLang();
+  const ethUsd = useEthUsd();
   const [amount, setAmount]           = useState(1);
   const [mintedAmt, setMintedAmt]     = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -398,7 +400,16 @@ export function CountryMintModal({
                     : mintDone      ? t.card_minted
                     : !isConnected  ? t.card_connect
                     : !hasEnoughEth ? "Insufficient ETH"
-                    : `${t.card_mint} · ${formatEth(totalCost, 4)} ETH`}
+                    : (
+                      <span className="flex flex-col items-center leading-tight gap-0.5">
+                        <span>{t.card_mint} · {formatEth(totalCost, 4)} ETH</span>
+                        {ethUsd && (
+                          <span style={{ fontSize: 11, opacity: 0.55, fontWeight: 600 }}>
+                            ≈ ${(Number(totalCost) / 1e18 * ethUsd).toFixed(2)}
+                          </span>
+                        )}
+                      </span>
+                    )}
                 </button>
 
                 <p style={{ fontSize: 11, color: "rgba(107,122,154,0.6)", textAlign: "center" }}>
