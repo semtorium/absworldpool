@@ -43,6 +43,7 @@ export function TopScorerPage() {
 
   const { data: topScorerFinalized } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalized" });
   const { data: finalTopScorer }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "finalTopScorer" });
+  const { data: votingClosed }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "votingClosed", query: { refetchInterval: 30_000 } });
 
   // Global votes per player — 5s refresh for live vote bar
   const playerVoteQueries = TOP_SCORER_PLAYERS.map(p =>
@@ -161,8 +162,20 @@ export function TopScorerPage() {
         </div>
       )}
 
+      {/* Voting closed banner */}
+      {votingClosed && !topScorerFinalized && (
+        <div className="glass-card p-4 flex items-center gap-3"
+          style={{ borderColor: "rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)" }}>
+          <span style={{ fontSize: 20 }}>🔒</span>
+          <div>
+            <p className="font-black text-sm" style={{ color: "#ef4444" }}>Voting Closed</p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.6)" }}>Ticket purchases and voting have been disabled by the admin</p>
+          </div>
+        </div>
+      )}
+
       {/* Buy tickets */}
-      {!topScorerFinalized && (
+      {!topScorerFinalized && !votingClosed && (
         <div className="glass-card p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -234,7 +247,7 @@ export function TopScorerPage() {
       )}
 
       {/* Unused tickets alert — animated */}
-      {isConnected && unusedTickets > 0 && !topScorerFinalized && (
+      {isConnected && unusedTickets > 0 && !topScorerFinalized && !votingClosed && (
         <div
           className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm"
           style={{
@@ -342,7 +355,7 @@ export function TopScorerPage() {
           {playersWithVotes.map((player) => {
             const pct      = (player.votes / maxVotes) * 100;
             const myVote   = voteAmounts[player.name] ?? 1;
-            const canVote  = unusedTickets > 0 && !topScorerFinalized && isConnected;
+            const canVote  = unusedTickets > 0 && !topScorerFinalized && !votingClosed && isConnected;
             const isWinner = topScorerFinalized && finalTopScorer === player.name;
             const isHighlighted = highlightPlayer === player.name;
 
