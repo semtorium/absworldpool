@@ -49,7 +49,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   return (
     <>
       <header className="sticky top-0 z-40 w-full"
-        style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        style={{ background: "rgba(0,20,10,0.20)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,255,136,0.15)" }}>
         <div className="max-w-7xl mx-auto px-4">
 
           {/* Top Row */}
