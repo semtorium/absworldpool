@@ -215,7 +215,13 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
 
         {/* Close */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            // Non-winners can't claim → mark as dismissed so modal doesn't reappear every refresh
+            if (!canClaim && address) {
+              localStorage.setItem(`nc_claimed_${address.toLowerCase()}`, "true");
+            }
+            onClose();
+          }}
           className="w-full py-3 rounded-xl text-sm font-bold"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#6b7a9a", cursor: "pointer" }}
         >
