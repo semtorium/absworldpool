@@ -515,7 +515,14 @@ export default function AdminPage() {
         {/* Finalize Nations Cup */}
         <div style={{ ...sectionStyle, marginBottom: 24, borderColor: ncFinalized ? "rgba(0,255,136,0.15)" : "rgba(251,191,36,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🏆 Finalize Nations Cup</h2>
-          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>Declare the winning country — irreversible.</p>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: !ncFinalized && !isMintClosed ? 10 : 16 }}>Declare the winning country — irreversible.</p>
+          {/* Front-run guard: warn if mint is still open */}
+          {!ncFinalized && !isMintClosed && (
+            <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.08)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.35)", fontSize: 12, color: "#ef4444", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>⚠️</span>
+              <span><strong>Mint must be closed before finalizing.</strong> Close mint first (above) to prevent front-running. The contract enforces this.</span>
+            </div>
+          )}
           {ncFinalized ? (
             <div style={{ padding: "12px 16px", background: "rgba(0,255,136,0.06)", borderRadius: 12, border: "1px solid rgba(0,255,136,0.2)" }}>
               <p style={{ color: "#00ff88", fontWeight: 700 }}>✓ Finalized — Winner: Country #{winningId.toString()}</p>

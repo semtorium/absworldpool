@@ -33,6 +33,11 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
     args: address ? [address, winnerName] : undefined,
     query: { enabled: !!address },
   });
+  const { data: onChainHasClaimed } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerHasClaimed",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
   const { data: totalVotesData } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "getPlayerVotes",
     args: [winnerName],
@@ -50,6 +55,9 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // On-chain ground truth: claimed on any device/browser
+  const alreadyClaimed = !!onChainHasClaimed || isSuccess;
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -77,7 +85,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   []);
 
-  const canClaim = isConnected && uVotes > 0;
+  const canClaim = isConnected && uVotes > 0 && !alreadyClaimed;
 
   return (
     <div
@@ -161,17 +169,17 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
                 address: CONTRACT_ADDRESS, abi: ABI,
                 functionName: "claimTopScorerRewards", args: [],
               })}
-              disabled={isPending || isConfirming || isSuccess}
+              disabled={isPending || isConfirming || alreadyClaimed}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm"
               style={{
-                background: isSuccess ? "rgba(124,58,237,0.15)" : "linear-gradient(135deg,#7c3aed,#6d28d9)",
-                color: isSuccess ? "#a78bfa" : "#fff",
-                border: isSuccess ? "1px solid rgba(124,58,237,0.3)" : "none",
-                cursor: isPending || isConfirming || isSuccess ? "not-allowed" : "pointer",
+                background: alreadyClaimed ? "rgba(124,58,237,0.15)" : "linear-gradient(135deg,#7c3aed,#6d28d9)",
+                color: alreadyClaimed ? "#a78bfa" : "#fff",
+                border: alreadyClaimed ? "1px solid rgba(124,58,237,0.3)" : "none",
+                cursor: isPending || isConfirming || alreadyClaimed ? "not-allowed" : "pointer",
               }}
             >
               {(isPending || isConfirming) && <Loader2 size={16} className="animate-spin" />}
-              {isSuccess ? t.tsw_claimed : (isPending || isConfirming) ? t.tsw_confirming : t.tsw_claim_btn}
+              {alreadyClaimed ? t.tsw_claimed : (isPending || isConfirming) ? t.tsw_confirming : t.tsw_claim_btn}
             </button>
           </div>
         )}

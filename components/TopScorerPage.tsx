@@ -56,6 +56,14 @@ export function TopScorerPage() {
   });
   const userWinnerVoteCount = Number(userWinnerVotes ?? 0n);
 
+  // On-chain ground truth for "already claimed" — works across devices/browsers
+  const { data: onChainHasClaimed } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "topScorerHasClaimed",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!topScorerFinalized },
+  });
+
   // Global votes per player — 5s refresh for live vote bar
   const playerVoteQueries = TOP_SCORER_PLAYERS.map(p =>
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -81,7 +89,9 @@ export function TopScorerPage() {
     }
   }, [isClaimTxSuccess, address]);
 
+  // isClaimSuccess: tx just confirmed OR on-chain mapping true (cross-device) OR localStorage flag
   const isClaimSuccess = isClaimTxSuccess ||
+    !!onChainHasClaimed ||
     (!!address && localStorage.getItem(TS_CLAIMED_KEY(address.toLowerCase())) === "true");
 
   // Show modal + refetch after buy

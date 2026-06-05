@@ -38,6 +38,7 @@ export const ABI = [
   },
   { type: "function", name: "getPlayerVotes",        inputs: [{ name: "playerName", type: "string" }],                              outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getUserVotesForPlayer", inputs: [{ type: "address" }, { name: "playerName", type: "string" }],         outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "topScorerHasClaimed",   inputs: [{ type: "address" }],                                                 outputs: [{ type: "bool" }],    stateMutability: "view" },
   // ── Write: user actions ───────────────────────────────────────
   { type: "function", name: "mintCountryNFT",         inputs: [{ name: "countryId", type: "uint256" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "payable" },
   { type: "function", name: "buyScorerTickets",       inputs: [{ name: "quantity", type: "uint256" }],                outputs: [], stateMutability: "payable" },
