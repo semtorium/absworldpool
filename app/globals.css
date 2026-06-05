@@ -122,6 +122,12 @@
   .tab-pill-inactive:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
   /* Nav dock buttons — new floating dock design */
+  .nav-dock-btn {
+    touch-action: manipulation;        /* removes iOS 300ms tap delay */
+    -webkit-tap-highlight-color: transparent; /* removes gray flash on tap */
+    user-select: none;
+    -webkit-user-select: none;
+  }
   .nav-dock-btn[data-active="false"]:hover {
     color: rgba(255,255,255,0.82) !important;
     background: rgba(255,255,255,0.07) !important;

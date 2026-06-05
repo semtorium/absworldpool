@@ -49,7 +49,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   return (
     <>
       <header className="sticky top-0 z-40 w-full"
-        style={{ background: "rgba(0,20,10,0.20)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,255,136,0.15)" }}>
+        style={{ background: "rgba(0,20,10,0.20)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,255,136,0.15)", touchAction: "manipulation" }}>
         <div className="max-w-7xl mx-auto px-4">
 
           {/* Top Row */}
@@ -120,9 +120,15 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                       boxShadow: "0 0 18px rgba(0,255,136,0.18), 0 2px 10px rgba(0,0,0,0.4)",
                       border: "1px solid rgba(0,255,136,0.22)",
                       textShadow: "0 0 12px rgba(0,255,136,0.4)",
+                      cursor: "pointer",
+                      touchAction: "manipulation",
+                      WebkitTapHighlightColor: "transparent",
                     } : {
                       color: "rgba(255,255,255,0.38)",
                       border: "1px solid transparent",
+                      cursor: "pointer",
+                      touchAction: "manipulation",
+                      WebkitTapHighlightColor: "transparent",
                     }}
                   >
                     <span className="text-base leading-none">{tab.emoji}</span>
