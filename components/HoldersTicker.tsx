@@ -27,6 +27,28 @@ async function resolveAbstractUsername(address: string): Promise<string | null> 
   }
 }
 
+// Defined outside to avoid recreation on every render
+function TickerItems({ holders }: { holders: HolderEntry[] }) {
+  return (
+    <>
+      {holders.map((h, i) => (
+        <span
+          key={i}
+          className="inline-flex items-center gap-1.5"
+          style={{ padding: "0 20px", fontSize: "11px", flexShrink: 0 }}
+        >
+          <span style={{ fontSize: "13px" }}>{RANK_EMOJIS[i]}</span>
+          <span className="font-bold" style={{ color: "#f0f4ff" }}>{h.displayName}</span>
+          <span className="font-black font-mono" style={{ color: "#00ff88" }}>
+            {h.totalNfts} NFT
+          </span>
+          <span style={{ color: "rgba(255,255,255,0.1)", margin: "0 4px" }}>·</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function HoldersTicker() {
   const client = usePublicClient();
   const [holders, setHolders] = useState<HolderEntry[]>([]);
@@ -70,7 +92,16 @@ export function HoldersTicker() {
           })
         );
 
-        setHolders(entries);
+        // Only update state if data actually changed — prevents animation restart
+        setHolders(prev => {
+          if (
+            prev.length === entries.length &&
+            prev.every((p, i) => p.address === entries[i].address && p.totalNfts === entries[i].totalNfts)
+          ) {
+            return prev;
+          }
+          return entries;
+        });
       } catch {
         // silent fail — ticker just stays hidden
       }
@@ -83,43 +114,23 @@ export function HoldersTicker() {
 
   if (holders.length === 0) return null;
 
-  // Spacer (100vw) + items + spacer + items → seamless, enters from right edge
   const duration = Math.max(30, holders.length * 5);
-
-  function ItemList() {
-    return (
-      <>
-        {/* Spacer: pushes content to start at the right edge of the screen */}
-        <span style={{ display: "inline-block", width: "100vw", flexShrink: 0 }} />
-        {holders.map((h, i) => (
-          <span
-            key={i}
-            className="inline-flex items-center gap-1.5"
-            style={{ padding: "0 20px", fontSize: "11px", flexShrink: 0 }}
-          >
-            <span style={{ fontSize: "13px" }}>{RANK_EMOJIS[i]}</span>
-            <span className="font-bold" style={{ color: "#f0f4ff" }}>{h.displayName}</span>
-            <span className="font-black font-mono" style={{ color: "#00ff88" }}>
-              {h.totalNfts} NFT
-            </span>
-            <span style={{ color: "rgba(255,255,255,0.1)", margin: "0 4px" }}>·</span>
-          </span>
-        ))}
-      </>
-    );
-  }
 
   return (
     <div
       style={{
-        background: "rgba(0,255,136,0.04)",
-        borderBottom: "1px solid rgba(0,255,136,0.12)",
+        background: "linear-gradient(90deg, rgba(5,8,16,0.92) 0%, rgba(10,18,30,0.88) 40%, rgba(5,8,16,0.92) 100%)",
+        borderTop: "1px solid rgba(0,255,136,0.14)",
+        borderBottom: "1px solid rgba(0,255,136,0.14)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         overflow: "hidden",
         height: "34px",
         display: "flex",
         alignItems: "center",
         position: "relative",
         zIndex: 50,
+        boxShadow: "0 0 24px rgba(0,255,136,0.06) inset, 0 2px 12px rgba(0,0,0,0.35)",
       }}
     >
       {/* Left label — sticky, sits on top */}
@@ -127,11 +138,12 @@ export function HoldersTicker() {
         className="shrink-0 flex items-center gap-1.5 px-3 text-[10px] font-black tracking-widest uppercase"
         style={{
           color: "#00ff88",
-          background: "rgba(5,8,16,0.95)",
+          background: "linear-gradient(90deg, rgba(0,255,136,0.1) 0%, rgba(0,255,136,0.04) 100%)",
           height: "100%",
-          borderRight: "1px solid rgba(0,255,136,0.15)",
+          borderRight: "1px solid rgba(0,255,136,0.18)",
           zIndex: 2,
           whiteSpace: "nowrap",
+          textShadow: "0 0 10px rgba(0,255,136,0.5)",
         }}
       >
         <span className="live-dot" style={{ width: 6, height: 6 }} />
@@ -142,14 +154,15 @@ export function HoldersTicker() {
       <div style={{ flex: 1, overflow: "hidden", height: "100%", position: "relative" }}>
         <div
           ref={trackRef}
+          className="ticker-track"
           style={{
             display: "inline-flex",
             alignItems: "center",
             height: "100%",
-            animation: `tickerScroll ${duration}s linear infinite`,
             whiteSpace: "nowrap",
             willChange: "transform",
-          }}
+            "--ticker-duration": `${duration}s`,
+          } as React.CSSProperties}
           onMouseEnter={() => {
             if (trackRef.current) trackRef.current.style.animationPlayState = "paused";
           }}
@@ -158,8 +171,8 @@ export function HoldersTicker() {
           }}
         >
           {/* Two identical halves → seamless loop at translateX(-50%) */}
-          <ItemList />
-          <ItemList />
+          <TickerItems holders={holders} />
+          <TickerItems holders={holders} />
         </div>
       </div>
     </div>
