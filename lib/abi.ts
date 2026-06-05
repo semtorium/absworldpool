@@ -38,7 +38,10 @@ export const ABI = [
   },
   { type: "function", name: "getPlayerVotes",        inputs: [{ name: "playerName", type: "string" }],                              outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getUserVotesForPlayer", inputs: [{ type: "address" }, { name: "playerName", type: "string" }],         outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "topScorerHasClaimed",   inputs: [{ type: "address" }],                                                 outputs: [{ type: "bool" }],    stateMutability: "view" },
+  { type: "function", name: "topScorerHasClaimed",   inputs: [{ type: "address" }], outputs: [{ type: "bool" }],    stateMutability: "view" },
+  { type: "function", name: "nationsCupHasClaimed",  inputs: [{ type: "address" }], outputs: [{ type: "bool" }],    stateMutability: "view" },
+  { type: "function", name: "pendingDevBalance",     inputs: [],                    outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "isPlayerRegistered",    inputs: [{ name: "name", type: "string" }], outputs: [{ type: "bool" }], stateMutability: "view" },
   // ── Write: user actions ───────────────────────────────────────
   { type: "function", name: "mintCountryNFT",         inputs: [{ name: "countryId", type: "uint256" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "payable" },
   { type: "function", name: "buyScorerTickets",       inputs: [{ name: "quantity", type: "uint256" }],                outputs: [], stateMutability: "payable" },
@@ -68,6 +71,9 @@ export const ABI = [
   },
   { type: "function", name: "withdrawUnclaimedNationsCup", inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "withdrawUnclaimedTopScorer",  inputs: [], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "withdrawPendingDev",          inputs: [], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "registerPlayers",   inputs: [{ name: "names", type: "string[]" }],  outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "unregisterPlayer",  inputs: [{ name: "name",  type: "string" }],    outputs: [], stateMutability: "nonpayable" },
   // ── Events ────────────────────────────────────────────────────
   { type: "event", name: "CountryMinted",          inputs: [{ name: "user", type: "address", indexed: true }, { name: "countryId", type: "uint256", indexed: true }, { name: "amount", type: "uint256" }, { name: "timestamp", type: "uint256" }] },
   { type: "event", name: "TicketPurchased",        inputs: [{ name: "user", type: "address", indexed: true }, { name: "quantity", type: "uint256" }, { name: "timestamp", type: "uint256" }] },

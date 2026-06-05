@@ -2,7 +2,7 @@ import { abstractTestnet } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x7360d66CC06CF7c7fb9E6Dc842457fe09a6Ee8a2" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0xEE9C5B10fc5b2A2E15ED9911EFc6FAADA204a2d4" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.

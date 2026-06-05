@@ -7,8 +7,11 @@ import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { TOP_SCORER_PLAYERS, EXTRA_ADMIN_WALLETS } from "@/lib/config";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+
+// Session key — includes contract address so re-deploy resets verification
+const ADMIN_VERIFIED_KEY = `abs_admin_verified_${CONTRACT_ADDRESS}`;
 
 // ── Viem clients ──────────────────────────────────────────────
 const publicClient = createPublicClient({
@@ -86,6 +89,13 @@ export default function AdminPage() {
   // Elimination state — no winner assignment needed in v6
   const [elimLoserIds, setElimLoserIds] = useState<number[]>([]);
 
+  // Signature verification gate
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
+  const [isVerifying,     setIsVerifying]     = useState(false);
+
+  // Pending dev balance
+  const [pendingDev, setPendingDev] = useState<bigint>(0n);
+
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
   const [tsPlayer,      setTsPlayer]      = useState("");
@@ -94,11 +104,18 @@ export default function AdminPage() {
   const [txSuccess,     setTxSuccess]     = useState<string | null>(null);
   const [txError,       setTxError]       = useState<string | null>(null);
 
+  // Restore verified state from sessionStorage on mount
+  useEffect(() => {
+    if (sessionStorage.getItem(ADMIN_VERIFIED_KEY) === "true") {
+      setIsAdminVerified(true);
+    }
+  }, []);
+
   // ── Fetch contract data ──
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim, ncAt, tsAt] = await Promise.all([
+      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim, ncAt, tsAt, pendDev] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
@@ -115,6 +132,7 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupFinalizedAt" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalizedAt" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "pendingDevBalance" }),
       ]);
 
       setTotalPool(tp as bigint);
@@ -133,6 +151,7 @@ export default function AdminPage() {
       setElimStatus(Array.from(elim as unknown as boolean[]));
       setNcFinalizedAt(ncAt as bigint);
       setTsFinalizedAt(tsAt as bigint);
+      setPendingDev(pendDev as bigint);
 
       // Fetch supplies for active countries
       const supplies = await Promise.all(
@@ -191,6 +210,32 @@ export default function AdminPage() {
       } else {
         throw err;
       }
+    }
+  };
+
+  // ── Signature verification gate ──
+  // Owner signs a time-windowed message to prove key ownership.
+  // Gasless (signMessage, not a TX). Stored in sessionStorage until tab closes.
+  const handleVerifySignature = async () => {
+    if (!provider || !address || !ownerAddress) return;
+    setIsVerifying(true);
+    try {
+      // 10-minute time window — prevents replay from old signatures
+      const timeWindow = Math.floor(Date.now() / (10 * 60 * 1000));
+      const message    = `ABSWorldPool Admin Panel\nContract: ${CONTRACT_ADDRESS}\nWindow: ${timeWindow}`;
+      const walletClient = createWalletClient({ account: address, chain: abstractTestnet, transport: custom(provider) });
+      const signature    = await walletClient.signMessage({ account: address, message });
+      const valid        = await publicClient.verifyMessage({ address: ownerAddress, message, signature });
+      if (valid) {
+        sessionStorage.setItem(ADMIN_VERIFIED_KEY, "true");
+        setIsAdminVerified(true);
+      } else {
+        alert("Signature does not match owner address.");
+      }
+    } catch (e: any) {
+      if (e?.code !== 4001) console.error(e); // 4001 = user rejected, not an error
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -284,19 +329,42 @@ export default function AdminPage() {
     </div>
   );
 
-  // ── Not authorized ──
+  // ── Not authorized — show generic 404, don't reveal admin panel exists ──
   if (address && ownerAddress && !isAuthorized) return (
     <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {showPicker && <WalletPicker />}
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        <span style={{ fontSize: 48 }}>⛔</span>
-        <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Access Denied</p>
-        <p style={{ color: "#6b7a9a", fontSize: 13 }}>Connected: {address.slice(0,6)}...{address.slice(-4)}</p>
-        <button onClick={() => { setAddress(null); setProvider(null); setShowPicker(true); }}
-          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 12, padding: "10px 22px", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
-          Switch Wallet
+        <p style={{ color: "rgba(255,255,255,0.08)", fontSize: 120, fontWeight: 900, lineHeight: 1, margin: 0 }}>404</p>
+        <p style={{ color: "#6b7a9a", fontSize: 16 }}>Page not found</p>
+        <Link href="/" style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none", fontSize: 13, marginTop: 8 }}>← Back to site</Link>
+      </div>
+    </div>
+  );
+
+  // ── Authorized but not verified — require wallet signature ──
+  if (address && isAuthorized && !isAdminVerified) return (
+    <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, maxWidth: 360, padding: "0 24px" }}>
+        <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShieldCheck size={36} style={{ color: "#00ff88" }} />
+        </div>
+        <p style={{ color: "#fff", fontSize: 20, fontWeight: 900, margin: 0 }}>Verify Ownership</p>
+        <p style={{ color: "#6b7a9a", fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+          Sign a message with your owner wallet to access the admin panel. This is gasless — no transaction required.
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 11, fontFamily: "monospace" }}>
+          {address.slice(0,6)}...{address.slice(-4)}
+        </p>
+        <button
+          onClick={handleVerifySignature}
+          disabled={isVerifying}
+          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 14, padding: "14px 32px", fontWeight: 900, fontSize: 14, cursor: isVerifying ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, opacity: isVerifying ? 0.7 : 1 }}>
+          {isVerifying && <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />}
+          {isVerifying ? "Waiting for signature…" : "🔑 Sign to Continue"}
         </button>
-        <Link href="/" style={{ color: "#6b7a9a", fontWeight: 700, textDecoration: "none", fontSize: 13 }}>← Back to site</Link>
+        <button onClick={() => { setAddress(null); setProvider(null); setShowPicker(true); }}
+          style={{ background: "transparent", border: "none", color: "#6b7a9a", fontSize: 12, cursor: "pointer" }}>
+          Switch wallet
+        </button>
       </div>
     </div>
   );
@@ -376,6 +444,7 @@ export default function AdminPage() {
           <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#00ff88"} />
           <Stat label="Site Maintenance"  value={isMaintenance ? "🔧 ON" : "✓ OFF"} color={isMaintenance ? "#fbbf24" : "#00ff88"} />
           <Stat label="Eliminated"        value={`${elimStatus.filter(Boolean).length} / 48`} color="#6b7a9a" />
+          <Stat label="Pending Dev Fees"  value={`${fmt(pendingDev)} ETH`} color={pendingDev > 0n ? "#ef4444" : "#6b7a9a"} sub={pendingDev > 0n ? "Failed transfers — withdraw below" : "All fees delivered"} />
         </div>
 
         {/* Mint Control */}
@@ -869,6 +938,47 @@ export default function AdminPage() {
             </div>
           );
         })()}
+
+        {/* Register Players */}
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(124,58,237,0.25)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>📋 Register Players (Whitelist)</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+            <strong style={{ color: "#fbbf24" }}>⚠️ Required before users can vote.</strong> Registers all {TOP_SCORER_PLAYERS.length} players from config as eligible for Top Scorer voting. Without this, <code style={{ color: "#a78bfa" }}>voteTopScorer()</code> will revert.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              disabled={txPending === "registerPlayers"}
+              onClick={() => sendTx("registerPlayers", [TOP_SCORER_PLAYERS.map(p => p.name)], "registerPlayers")}
+              style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+              {txPending === "registerPlayers" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {txPending === "registerPlayers" ? "Registering…" : `Register All ${TOP_SCORER_PLAYERS.length} Players`}
+            </button>
+            <p style={{ color: "#6b7a9a", fontSize: 12 }}>One TX — all players from config.ts whitelist</p>
+          </div>
+        </div>
+
+        {/* Withdraw Pending Dev Fees */}
+        {pendingDev > 0n && (
+          <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(239,68,68,0.4)" }}>
+            <h2 style={{ fontSize: 15, fontWeight: 800, color: "#ef4444", marginBottom: 4 }}>⚠️ Pending Dev Fees</h2>
+            <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+              Some dev fee transfers failed (devWallet was temporarily unreachable). These ETH are safely stored in the contract. Withdraw them now.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderRadius: 14, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.3)", gap: 12 }}>
+              <div>
+                <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Accumulated Pending</p>
+                <p style={{ color: "#ef4444", fontWeight: 900, fontFamily: "monospace", fontSize: 18, marginTop: 4 }}>{fmt(pendingDev)} ETH</p>
+              </div>
+              <button
+                disabled={txPending === "withdrawPendingDev"}
+                onClick={() => sendTx("withdrawPendingDev", [], "withdrawPendingDev")}
+                style={{ background: "linear-gradient(135deg,#ef4444,#dc2626)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 24px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+                {txPending === "withdrawPendingDev" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {txPending === "withdrawPendingDev" ? "Confirming…" : "Withdraw to devWallet"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Contract Config */}
         <div style={{ ...sectionStyle, borderColor: "rgba(239,68,68,0.15)" }}>
