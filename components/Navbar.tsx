@@ -95,19 +95,51 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
             </div>
           </div>
 
-          {/* Tabs — centered */}
+          {/* Tabs — floating dock */}
           <div className="flex justify-center pb-3">
-            <div className="flex items-center gap-1">
-              {TABS.map(tab => (
-                <button key={tab.id} onClick={() => onTabChange(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-all duration-150 ${
-                    activeTab === tab.id ? "tab-pill-active" : "tab-pill-inactive"
-                  }`}>
-                  <span>{tab.emoji}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              ))}
-            </div>
+            <nav
+              className="flex items-center p-1 gap-0.5 rounded-2xl"
+              style={{
+                background: "rgba(10,18,30,0.6)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                backdropFilter: "blur(14px)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+              }}
+            >
+              {TABS.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => onTabChange(tab.id)}
+                    className="nav-dock-btn relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200"
+                    data-active={isActive ? "true" : "false"}
+                    style={isActive ? {
+                      background: "linear-gradient(135deg, rgba(124,58,237,0.85) 0%, rgba(0,180,90,0.7) 100%)",
+                      color: "#fff",
+                      boxShadow: "0 0 18px rgba(0,255,136,0.18), 0 2px 10px rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(0,255,136,0.22)",
+                      textShadow: "0 0 12px rgba(0,255,136,0.4)",
+                    } : {
+                      color: "rgba(255,255,255,0.38)",
+                      border: "1px solid transparent",
+                    }}
+                  >
+                    <span className="text-base leading-none">{tab.emoji}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    {isActive && (
+                      <span
+                        className="absolute inset-0 rounded-xl pointer-events-none"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(0,255,136,0.06))",
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+                        }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         </div>
       </header>
