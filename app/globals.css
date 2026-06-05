@@ -36,6 +36,21 @@
     min-height: 100vh;
   }
 
+  /* Mobile: background-attachment:fixed bozuluyor iOS/Android'de.
+     Stadyum görseli landscape, portrait ekranda cover çok zoom yapar.
+     Çözüm: scroll, cover koru ama konumu merkeze al + güçlü gradient overlay */
+  @media (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+      background-image:
+        linear-gradient(180deg, rgba(5,8,16,0.55) 0%, rgba(5,8,16,0.15) 30%, rgba(5,8,16,0.70) 100%),
+        radial-gradient(ellipse 150% 50% at 50% 0%, rgba(124,58,237,0.10) 0%, transparent 60%),
+        url("/bg.jpg");
+      background-size: cover;
+      background-position: 60% center;
+    }
+  }
+
   ::selection { background: rgba(0,255,136,0.25); }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--surface); }
