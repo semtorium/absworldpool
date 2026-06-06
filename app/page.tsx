@@ -8,7 +8,6 @@ import { GroupsPage }                    from "@/components/GroupsPage";
 import { TopScorerPage }                 from "@/components/TopScorerPage";
 import { LeaderboardPage }               from "@/components/LeaderboardPage";
 import { ActivityPage }                  from "@/components/ActivityPage";
-import { HoldersTicker }                 from "@/components/HoldersTicker";
 import { PrizeCounter }                  from "@/components/PrizeCounter";
 import { LoadingScreen }                 from "@/components/LoadingScreen";
 import { TermsModal }                    from "@/components/TermsModal";
@@ -178,7 +177,6 @@ export default function Home() {
         />
       )}
       <div className="min-h-screen" style={{ visibility: appReady ? "visible" : "hidden" }}>
-        <HoldersTicker />
         <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
         <PrizeCounter activeTab={activeTab} />
         <main className="max-w-7xl mx-auto px-4 py-6">
